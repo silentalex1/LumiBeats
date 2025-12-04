@@ -1,0 +1,66 @@
+.animate-line-in #visualizer-line {
+    animation: line-fade-in 1.0s ease-out forwards;
+}
+
+@keyframes line-fade-in {
+    from {
+        opacity: 0;
+        transform: scaleX(0);
+    }
+    to {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+}
+
+#visualizer-line {
+    transition: all 0.05s linear;
+}
+
+.pulse-fade {
+    animation: final-pulse 0.5s ease-in-out forwards;
+}
+
+@keyframes final-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
+        box-shadow: 0 0 20px 5px #6366F1;
+    }
+    100% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+}
+
+#wave-fill {
+    transition: stroke-dashoffset 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smooth easing */
+}
+
+#loading-status.visible {
+    opacity: 1;
+}
+
+#gemini-api-key {
+    font-family: monospace;
+}
+
+/* Custom Grid for Sequencer (16 steps) */
+.grid-cols-16 {
+    grid-template-columns: repeat(16, minmax(0, 1fr));
+}
+
+.beat-step.active {
+    background-color: #6366F1; /* Active color: Indigo-600 */
+    transform: scale(1.05);
+}
+
+/* Modal animation classes */
+#settings-modal.active > div {
+    opacity: 1;
+    transform: scale(1);
+}
