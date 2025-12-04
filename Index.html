@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumi Beats</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-black overflow-hidden">
+
+    <div id="loading-overlay" class="fixed inset-0 bg-black flex flex-col justify-center items-center z-50 transition-opacity duration-1000 ease-in-out">
+        <div id="visualizer-container" class="relative w-full h-1/4 max-w-4xl flex justify-center items-center opacity-0">
+            <div id="visualizer-line" class="absolute h-0.5 bg-gray-500 w-full transform -translate-y-1/2"></div>
+        </div>
+
+        <div id="loading-status" class="flex flex-col items-center mt-12 opacity-0 transition-opacity duration-500">
+            <div class="relative w-24 h-24">
+                <svg id="loading-circle" viewBox="0 0 100 100" class="w-full h-full transform -rotate-90">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#2D3748" stroke-width="5"></circle>
+                    <circle id="wave-fill" cx="50" cy="50" r="45" fill="none" stroke="#6366F1" stroke-width="5" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="283"></circle>
+                </svg>
+                <span id="loading-percent" class="absolute inset-0 flex justify-center items-center text-white text-lg font-mono">0%</span>
+            </div>
+            <p id="loading-text" class="text-white text-xl font-mono mt-4">Loading assets and beats...</p>
+        </div>
+    </div>
+
+    <div id="app-container" class="hidden min-h-screen flex bg-gray-900 transition-opacity duration-1000">
+
+        <aside class="w-20 bg-gray-800 flex flex-col justify-between py-6">
+            <div class="flex flex-col items-center space-y-8">
+                <div class="p-2 rounded-full bg-indigo-600 text-white shadow-lg">
+                    <i class="fas fa-headphones text-2xl" aria-label="Lumi Beats Icon"></i>
+                </div>
+                <button class="text-indigo-400 hover:text-indigo-300 focus:outline-none transition duration-150">
+                    <i class="fas fa-music text-xl" aria-label="Beats Editor"></i>
+                </button>
+                <button class="text-gray-400 hover:text-indigo-300 focus:outline-none transition duration-150">
+                    <i class="fas fa-microphone-alt text-xl" aria-label="Voice Customization"></i>
+                </button>
+            </div>
+            <div class="flex flex-col items-center">
+                <button id="settings-btn" class="text-gray-400 hover:text-white focus:outline-none transition duration-150 p-2 rounded-full hover:bg-gray-700">
+                    <i class="fas fa-cog text-xl" aria-label="Settings"></i>
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-8">
+            <header class="text-white text-3xl font-bold mb-8">Beat Creation Studio</header>
+            <div class="grid grid-cols-3 gap-8">
+                <div class="col-span-1 bg-gray-800 p-6 rounded-xl shadow-2xl">
+                    <h3 class="text-indigo-400 text-lg font-semibold mb-4"><i class="fas fa-user-circle mr-2"></i> Voice Customizer</h3>
+                    <p class="text-gray-300 mb-4">Morph and fine-tune your vocal track.</p>
+                    <div class="space-y-4">
+                        <label class="text-sm text-gray-400 block">Pitch Shift</label>
+                        <input type="range" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer range-lg accent-indigo-500" value="50">
+                        <label class="text-sm text-gray-400 block">Reverb</label>
+                        <input type="range" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer range-lg accent-indigo-500" value="20">
+                    </div>
+                </div>
+
+                <div class="col-span-2 bg-gray-800 p-6 rounded-xl shadow-2xl">
+                    <h3 class="text-indigo-400 text-lg font-semibold mb-4"><i class="fas fa-drum mr-2"></i> Sequencer Pad</h3>
+                    <p class="text-gray-300 mb-4">Click to activate beat elements.</p>
+                    <div class="grid grid-cols-8 gap-2">
+                        <div class="col-span-8 flex justify-between text-xs text-gray-500 mb-1">
+                            <span>Kick</span><span>Snare</span><span>Hi-Hat</span><span>Cymbal</span><span>Bass</span><span>Synth</span><span>Clap</span><span>Open-Hat</span>
+                        </div>
+                        <div class="bg-indigo-600 h-8 rounded cursor-pointer hover:bg-indigo-500 transition duration-150"></div>
+                        <div class="bg-gray-700 h-8 rounded cursor-pointer hover:bg-gray-600 transition duration-150"></div>
+                        </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center transition-opacity duration-300">
+        <div class="bg-gray-800 p-8 rounded-xl w-full max-w-md shadow-2xl border border-gray-700">
+            <h2 class="text-2xl font-bold text-white mb-6">Application Settings</h2>
+
+            <div class="mb-6">
+                <label for="gemini-api-key" class="block text-sm font-medium text-gray-300 mb-2">Gemini API Key</label>
+                <input type="password" id="gemini-api-key" placeholder="Enter your Gemini api key:"
+                       class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-indigo-500 focus:border-indigo-500 appearance-none tracking-widest">
+                <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank" class="block mt-2 text-sm text-blue-400 hover:text-blue-300 transition duration-150">
+                    Click here to generate your api key.
+                </a>
+            </div>
+
+            <button id="save-settings-btn" class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-500 transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                Save Settings
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
