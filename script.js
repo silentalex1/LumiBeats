@@ -45,10 +45,19 @@ function generateSound(type) {
             if (type === 'drum') {
                 if (i < 5000) data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 20); 
                 if (i < 15000) data[i] += Math.sin(t * 100 * Math.PI) * Math.exp(-t * 10);
+            } else if (type === 'lofi') {
+                if (i < 6000) data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 15) * 0.8;
+                if (i < 100) data[i] *= 0.5; // Soft attack
+                data[i] = Math.max(-0.6, Math.min(0.6, data[i] * 1.5)); // Clip/Distort
             } else if (type === 'snare') {
                 const noise = Math.random() * 2 - 1;
                 const env = Math.exp(-t * 15);
                 data[i] = noise * env;
+            } else if (type === 'clap') {
+                const noise = Math.random() * 2 - 1;
+                let env = Math.exp(-t * 20);
+                if (i > 1000 && i < 2000) env += 0.5; 
+                data[i] = noise * env * 0.8;
             } else if (type === 'hihat') {
                 if (i % 3000 < 500) data[i] = (Math.random() * 2 - 1) * 0.3;
             } else if (type === '808') {
@@ -62,15 +71,33 @@ function generateSound(type) {
                 data[i] += Math.sin(t * freq * 2 * 2 * Math.PI) * Math.exp(-t * 4) * 0.2;
             } else if (type === 'guitar') {
                 const freq = 196; 
-                const osc = (Math.abs((t * freq * 2) % 2 - 1) * 2 - 1); // Triangleish
+                const osc = (Math.abs((t * freq * 2) % 2 - 1) * 2 - 1); 
                 data[i] = osc * Math.exp(-t * 2) * 0.6;
+            } else if (type === 'electric') {
+                const freq = 196; 
+                const osc = (Math.abs((t * freq * 2) % 2 - 1) * 2 - 1); 
+                data[i] = Math.max(-0.5, Math.min(0.5, osc * 5)) * Math.exp(-t * 1.5); // Distorted
+            } else if (type === 'harp') {
+                const freq = 523; 
+                data[i] = Math.sin(t * freq * 2 * Math.PI) * Math.exp(-t * 4) * 0.4;
+                if (i % 8000 < 4000) data[i] += Math.sin(t * freq * 1.5 * 2 * Math.PI) * 0.1;
+            } else if (type === 'violin') {
+                const freq = 440;
+                const vib = Math.sin(t * 6 * 2 * Math.PI) * 3;
+                const saw = (t * (freq+vib)) % 1 * 2 - 1;
+                data[i] = saw * 0.3 * (t < 0.2 ? t*5 : 1) * Math.exp(-t*0.5);
+            } else if (type === 'sax') {
+                const freq = 261;
+                const square = (Math.sin(t * freq * 2 * Math.PI) > 0 ? 0.5 : -0.5);
+                const saw = (t * freq) % 1 * 2 - 1;
+                data[i] = (square * 0.5 + saw * 0.5) * 0.4;
             } else if (type === 'flute') {
                 const freq = 523; 
                 data[i] = (Math.sin(t * freq * 2 * Math.PI) + 0.1 * Math.sin(t * freq * 2 * 2 * Math.PI)) * 0.4 * Math.min(1, t*10);
             } else if (type === 'techno') {
                 const freq = 110; 
                 const mod = Math.sin(t * 10);
-                data[i] = ((t * freq * 2 * Math.PI + mod) % 1 > 0.5 ? 0.6 : -0.6); // Squareish
+                data[i] = ((t * freq * 2 * Math.PI + mod) % 1 > 0.5 ? 0.6 : -0.6); 
             } else if (type === 'synth') {
                 const freq = 220;
                 data[i] = (Math.random() * 0.05 + Math.sin(t * freq * 2 * Math.PI + Math.sin(t*10))) * 0.4;
@@ -335,9 +362,9 @@ async function handleAiRequest() {
         if(typeof puter === 'undefined') throw new Error("Puter not loaded");
 
         const prompt = `User request: "${text}". 
-        Act as a music studio AI. Return a single token for the best instrument matching the description.
-        Tokens: [ADD:drum], [ADD:snare], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:guitar], [ADD:flute], [ADD:techno], [ADD:synth], [ADD:strings], [ADD:bell].
-        Return short text then the token.`;
+        Act as Lumi, a music AI. Return a single token for the best instrument.
+        Tokens: [ADD:drum], [ADD:lofi], [ADD:snare], [ADD:clap], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:guitar], [ADD:electric], [ADD:harp], [ADD:violin], [ADD:sax], [ADD:flute], [ADD:techno], [ADD:synth], [ADD:strings], [ADD:bell].
+        Return a friendly short text then the token.`;
         
         const response = await puter.ai.chat(prompt);
         
@@ -348,12 +375,18 @@ async function handleAiRequest() {
         let actionBtn = '';
         
         if (response.includes('[ADD:drum]')) actionBtn = createAiBtn('drum', 'Kick Drum');
+        else if (response.includes('[ADD:lofi]')) actionBtn = createAiBtn('lofi', 'Lo-Fi Kick');
         else if (response.includes('[ADD:snare]')) actionBtn = createAiBtn('snare', 'Trap Snare');
+        else if (response.includes('[ADD:clap]')) actionBtn = createAiBtn('clap', 'Studio Clap');
         else if (response.includes('[ADD:hihat]')) actionBtn = createAiBtn('hihat', 'Hi-Hats');
         else if (response.includes('[ADD:808]')) actionBtn = createAiBtn('808', '808 Bass');
         else if (response.includes('[ADD:bass]')) actionBtn = createAiBtn('bass', 'Deep Bass');
         else if (response.includes('[ADD:piano]')) actionBtn = createAiBtn('piano', 'Grand Piano');
         else if (response.includes('[ADD:guitar]')) actionBtn = createAiBtn('guitar', 'Guitar');
+        else if (response.includes('[ADD:electric]')) actionBtn = createAiBtn('electric', 'Electric Guitar');
+        else if (response.includes('[ADD:harp]')) actionBtn = createAiBtn('harp', 'Harp');
+        else if (response.includes('[ADD:violin]')) actionBtn = createAiBtn('violin', 'Violin');
+        else if (response.includes('[ADD:sax]')) actionBtn = createAiBtn('sax', 'Saxophone');
         else if (response.includes('[ADD:flute]')) actionBtn = createAiBtn('flute', 'Jazz Flute');
         else if (response.includes('[ADD:techno]')) actionBtn = createAiBtn('techno', 'Techno Lead');
         else if (response.includes('[ADD:synth]')) actionBtn = createAiBtn('synth', 'Saw Synth');
