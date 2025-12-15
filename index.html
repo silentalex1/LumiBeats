@@ -16,7 +16,7 @@
         </div>
         <div class="nav-right">
             <button id="ai-chat-toggle" class="nav-btn ai-btn">
-                <span class="btn-icon">✨</span> <span class="btn-label">AI Chat</span>
+                <span class="btn-icon">✨</span> <span class="btn-label">AI Studio</span>
             </button>
             <button id="login-btn" class="nav-btn login-btn">Login</button>
             <div id="user-profile" class="user-profile hidden">
@@ -25,73 +25,69 @@
         </div>
     </nav>
 
-    <main class="studio-container">
-        <section class="status-display">
-            <div id="status-text" class="status-text">Ready to Record</div>
-            <div class="visualizer-bar">
-                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                <div class="bar"></div><div class="bar"></div>
+    <main class="editor-container">
+        
+        <section class="toolbar-panel">
+            <div class="time-display" id="time-display">00:00:00</div>
+            <div class="transport-controls">
+                <button id="record-btn" class="t-btn record-btn"></button>
+                <button id="play-btn" class="t-btn play-btn">▶</button>
+                <button id="stop-btn" class="t-btn stop-btn">■</button>
             </div>
+            <button id="download-btn" class="export-btn">Export</button>
         </section>
 
-        <section class="transport-deck">
-            <div class="transport-row">
-                <button id="record-btn" class="transport-btn record-btn">
-                    <div class="inner-circle"></div>
-                </button>
-                <button id="play-btn" class="transport-btn play-btn">
-                    <div class="play-icon"></div>
-                </button>
-                <button id="stop-btn" class="transport-btn stop-btn">
-                    <div class="stop-icon"></div>
-                </button>
-            </div>
-            <div class="time-display">00:00:00</div>
-        </section>
-
-        <section class="mixer-panel">
-            <div class="panel-header">
-                <h3>Studio Controls</h3>
-                <button id="download-btn" class="action-btn">Download .WAV</button>
-            </div>
-            
-            <div class="sliders-container">
-                <div class="slider-wrapper">
-                    <label>Master Volume</label>
-                    <input type="range" id="volume-slider" min="0" max="2" step="0.1" value="1" class="custom-range">
+        <section class="timeline-workspace">
+            <div class="library-sidebar">
+                <div class="sidebar-header">Add Media</div>
+                <button class="lib-btn" id="add-mic-btn">+ Mic / Record</button>
+                <button class="lib-btn" id="add-drums-btn">+ Basic Drums</button>
+                <button class="lib-btn" id="add-synth-btn">+ Synth Loop</button>
+                
+                <div class="sidebar-header" style="margin-top: 20px;">Effects</div>
+                <div class="effect-control">
+                    <label>Speed</label>
+                    <input type="range" id="speed-slider" min="0.5" max="2" step="0.1" value="1">
                 </div>
-                <div class="slider-wrapper">
-                    <label>Playback Speed / Pitch</label>
-                    <input type="range" id="pitch-slider" min="0.5" max="2" step="0.1" value="1" class="custom-range">
+                <div class="effect-control">
+                    <label>Volume</label>
+                    <input type="range" id="vol-slider" min="0" max="2" step="0.1" value="1">
                 </div>
             </div>
-        </section>
 
-        <section class="tracks-container">
-            <h3>Your Tracks</h3>
-            <div id="track-list" class="track-list">
-                <div class="empty-state">
-                    <p>Tap the Red Circle to start recording your beat.</p>
+            <div class="timeline-area" id="timeline-area">
+                <div class="playhead-container">
+                    <div id="playhead" class="playhead"></div>
+                </div>
+                <div id="tracks-wrapper" class="tracks-wrapper">
+                    <!-- Tracks render here -->
+                    <div class="empty-timeline-msg">Add audio or ask AI to start...</div>
                 </div>
             </div>
         </section>
+
     </main>
 
     <div id="ai-overlay" class="ai-overlay hidden"></div>
     <div id="ai-chat-widget" class="ai-chat-widget hidden">
         <div class="chat-header">
             <div class="chat-title">
-                <span class="sparkle">✨</span> Lumi AI Studio
+                <span class="sparkle">✨</span> Lumi AI
             </div>
             <button id="close-chat" class="icon-btn">✕</button>
         </div>
         <div id="chat-history" class="chat-history">
             <div class="chat-bubble ai-bubble">
-                Thank you for using Lumi Beats AI. What do you need help with your music beat?
+                I'm ready. I can add drums, melodies, or suggest ideas. What's the vibe?
             </div>
         </div>
+        
+        <div id="typing-indicator" class="typing-indicator hidden">
+            <span></span><span></span><span></span>
+        </div>
+
         <div class="chat-input-wrapper">
-            <input type="text" id="chat-input" placeholder="Ask for melody ideas...">
+            <input type="text" id="chat-input" placeholder="e.g., 'Add a chill beat'">
             <button id="send-chat" class="send-btn">➤</button>
         </div>
     </div>
