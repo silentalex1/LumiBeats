@@ -119,8 +119,10 @@ body {
 .time-display { font-family: 'Courier New', monospace; color: var(--accent); font-size: 1.2rem; font-weight: 600; }
 
 .transport-deck {
-    display: flex; gap: 20px; align-items: center; background: #1f1f22; padding: 8px 25px; border-radius: 30px; border: 1px solid var(--border);
+    display: flex; gap: 15px; align-items: center; background: #1f1f22; padding: 8px 20px; border-radius: 30px; border: 1px solid var(--border);
 }
+
+.divider { width: 1px; height: 24px; background: var(--border); margin: 0 5px; }
 
 .ctrl-btn {
     background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; transition: transform 0.1s, background 0.2s;
@@ -138,8 +140,8 @@ body {
 .stop-btn { background: #27272a; }
 .stop-btn span { font-size: 1rem; color: var(--text-muted); }
 
-.delete-btn { background: #ef4444; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-.delete-btn.visible { opacity: 1; pointer-events: auto; }
+.delete-btn { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--red); color: var(--red); }
+.delete-btn:hover { background: var(--red); color: white; }
 .trash-icon { font-size: 1.1rem; }
 
 .export-btn { background: var(--accent); color: var(--bg-main); border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.9rem; white-space: nowrap; }
@@ -239,16 +241,16 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 18px; height:
 .audio-clip.selected {
     border: 2px solid white !important;
     z-index: 30;
-    box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 15px rgba(255,255,255,0.3);
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 15px rgba(255,255,255,0.5);
+    transform: scale(1.02);
 }
 
 .audio-clip.selected::before, .audio-clip.selected::after {
     content: '';
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 25%;
+    bottom: 25%;
     width: 4px;
-    height: 40%;
     background: white;
     border-radius: 2px;
 }
@@ -271,10 +273,6 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 18px; height:
 .audio-clip.synth { background: #6366f1; }
 .audio-clip.strings { background: #16a34a; }
 .audio-clip.bell { background: #b45309; }
-.audio-clip.organ { background: #7c2d12; }
-.audio-clip.marimba { background: #fcd34d; color: black; }
-.audio-clip.brass { background: #fbbf24; color: black; }
-.audio-clip.8bit { background: #10b981; }
 .audio-clip.mic { background: #dc2626; border: 1px dashed white; }
 
 .empty-timeline-msg { text-align: center; color: var(--text-muted); margin-top: 60px; }
@@ -338,7 +336,7 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 18px; height:
 
     .toolbar-panel { flex-wrap: wrap; height: auto; gap: 15px; justify-content: center; padding: 20px 15px; }
     .time-display-wrapper { order: 1; width: 100%; text-align: center; }
-    .transport-deck { order: 2; width: 100%; justify-content: center; padding: 12px 30px; }
+    .transport-deck { order: 2; width: 100%; justify-content: center; padding: 12px 20px; }
     .export-btn { order: 3; width: 100%; }
     
     .library-panel { flex-direction: column; padding: 20px 15px; gap: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
