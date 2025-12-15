@@ -11,12 +11,14 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo-group" onclick="router.navigate('/')">
+        <div class="logo-group" id="nav-logo">
             <div class="logo-icon">LB</div>
             <div class="logo-text">lumi beats <span class="badge">BETA</span></div>
         </div>
         <div class="nav-controls">
             <button id="mobile-menu-btn" class="nav-btn menu-btn">=</button>
+            <button id="nav-projects-btn" class="nav-btn">Your Projects</button>
+            <button id="mobile-del-btn" class="nav-btn mobile-only hidden">Delete Project</button>
             <button id="ai-chat-toggle" class="nav-btn ai-btn">
                 <span class="icon">✨</span> AI Studio
             </button>
@@ -27,7 +29,6 @@
         </div>
     </nav>
 
-    <!-- VIEW: EDITOR (Main) -->
     <div id="view-editor" class="view-section active">
         <main class="main-workspace">
             <div id="video-stage" class="video-preview-area hidden">
@@ -55,10 +56,10 @@
                                 <span>■</span>
                             </button>
                             <div class="sep"></div>
-                            <button id="split-btn" class="transport-btn split hidden" title="Split (Ctrl+C)">
+                            <button id="split-btn" class="transport-btn split hidden" title="Split">
                                 <span>✂</span>
                             </button>
-                            <button id="delete-btn" class="transport-btn delete hidden" title="Delete (Del)">
+                            <button id="delete-btn" class="transport-btn delete hidden" title="Delete">
                                 <span>🗑</span>
                             </button>
                         </div>
@@ -155,47 +156,73 @@
         </main>
     </div>
 
-    <!-- VIEW: EXPORTING -->
     <div id="view-exporting" class="view-section hidden">
-        <div class="export-container">
-            <div class="loader-circle"></div>
-            <h2>Rendering Project</h2>
-            <p id="export-status">Processing Audio & Video Layers...</p>
-            <div class="progress-bar">
-                <div class="fill" id="export-fill"></div>
+        <div class="center-wrapper">
+            <div class="export-card">
+                <div class="loader-circle"></div>
+                <h2>Rendering Project</h2>
+                <p id="export-status">Processing Layers...</p>
+                <div class="progress-bar">
+                    <div class="fill" id="export-fill"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- VIEW: PROJECT OPTIONS -->
     <div id="view-project-option" class="view-section hidden">
-        <div class="modal">
-            <div class="icon-check">✓</div>
-            <h2>Export Complete</h2>
-            <p>Your project has been rendered successfully.</p>
-            <div class="divider"></div>
-            <p class="question">Would you like to save this project to your library?</p>
-            <div class="btn-group">
-                <button id="opt-no-btn" class="btn sec">No, Close</button>
-                <button id="opt-yes-btn" class="btn pri">Yes, Save Project</button>
+        <div class="center-wrapper">
+            <div class="modal">
+                <div class="icon-check">✓</div>
+                <h2>Export Complete</h2>
+                <p>Your file has been processed successfully.</p>
+                <div class="divider"></div>
+                <p class="question">Would you like to save this project to your library?</p>
+                <div class="btn-group">
+                    <button id="opt-no-btn" class="btn sec">No, Close</button>
+                    <button id="opt-yes-btn" class="btn pri">Yes, Save Project</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- VIEW: SAVED PROJECTS -->
     <div id="view-saved-projects" class="view-section hidden">
         <div class="projects-layout">
             <header class="projects-header">
-                <h1>My Projects</h1>
+                <div class="header-text">
+                    <h1>My Projects</h1>
+                    <p>Manage and edit your creations</p>
+                </div>
                 <button id="new-project-btn" class="new-btn">+ New Project</button>
             </header>
-            <div id="project-grid" class="grid">
-                <!-- JS will populate -->
+            <div id="project-grid" class="grid"></div>
+        </div>
+    </div>
+
+    <div id="rename-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h3>Rename Project</h3>
+            <input type="text" id="rename-input" class="modal-input" placeholder="Enter new name">
+            <div class="modal-actions">
+                <button id="cancel-rename" class="btn sec">Cancel</button>
+                <button id="confirm-rename" class="btn pri">Save</button>
             </div>
         </div>
     </div>
 
-    <!-- AI WIDGET -->
+    <div id="mobile-delete-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h3>Delete Project</h3>
+            <p>Select a project to delete:</p>
+            <div class="dropdown-container modal-drop">
+                <select id="mobile-delete-select" class="styled-select"></select>
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-mobile-del" class="btn sec">Cancel</button>
+                <button id="confirm-mobile-del" class="btn danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <div id="ai-overlay" class="overlay hidden"></div>
     <div id="ai-widget" class="floating-widget hidden">
         <div class="widget-header" id="widget-header">
