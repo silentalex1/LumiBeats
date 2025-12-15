@@ -5,12 +5,15 @@ let isRecording = false;
 let mediaRecorder;
 let audioChunks = [];
 let animationFrame;
-let startTime = 0;
 let activeSources = [];
+
+const timelineDuration = 15.0; // Seconds
 
 const trackWrapper = document.getElementById('tracks-wrapper');
 const timeDisplay = document.getElementById('time-display');
 const playhead = document.getElementById('playhead');
+const playBtn = document.getElementById('play-btn');
+const playIcon = document.getElementById('play-icon');
 const chatWidget = document.getElementById('ai-chat-widget');
 const chatOverlay = document.getElementById('ai-overlay');
 const chatHistory = document.getElementById('chat-history');
@@ -18,12 +21,13 @@ const typingIndicator = document.getElementById('typing-indicator');
 
 function initAudio() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
 function generateSound(type) {
     initAudio();
     const sampleRate = audioCtx.sampleRate;
-    const duration = 2.0; 
+    const duration = 2.5; 
     const frameCount = sampleRate * duration;
     const buffer = audioCtx.createBuffer(2, frameCount, sampleRate);
 
@@ -33,25 +37,33 @@ function generateSound(type) {
             const t = i / sampleRate;
             
             if (type === 'drum') {
-                if (i < 10000 && i % 8000 < 500) data[i] = (Math.random() * 2 - 1) * 0.8; 
-                else data[i] = 0;
+                if (i < 5000) data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 20); // Impact
+                if (i < 15000) data[i] += Math.sin(t * 100 * Math.PI) * Math.exp(-t * 10); // Thud
             } else if (type === 'snare') {
                 const noise = Math.random() * 2 - 1;
-                const envelope = Math.exp(-t * 20);
-                data[i] = noise * envelope;
+                const env = Math.exp(-t * 15);
+                data[i] = noise * env;
             } else if (type === 'hihat') {
-                if (i % 5000 < 1000) data[i] = (Math.random() * 2 - 1) * Math.exp(-(i%5000)/500);
-                else data[i] = 0;
+                if (i % 3000 < 500) data[i] = (Math.random() * 2 - 1) * 0.3;
+            } else if (type === '808') {
+                const freq = 45; 
+                data[i] = Math.tanh(Math.sin(t * freq * 2 * Math.PI * (1 - t*0.5)) * 5) * Math.exp(-t * 1.5);
             } else if (type === 'bass') {
-                const freq = 55; 
-                data[i] = Math.sin(t * freq * 2 * Math.PI) * 0.6 + Math.sin(t * freq * 1.01 * 2 * Math.PI) * 0.3;
+                data[i] = Math.sin(t * 80 * 2 * Math.PI) * 0.5 + Math.sin(t * 160 * 2 * Math.PI) * 0.2;
             } else if (type === 'piano') {
-                const freq = 440;
-                const decay = Math.exp(-t * 3);
-                data[i] = Math.sin(t * freq * 2 * Math.PI) * decay * 0.5;
+                const freq = 330; // E4
+                data[i] = Math.sin(t * freq * 2 * Math.PI) * Math.exp(-t * 3) * 0.5;
+                data[i] += Math.sin(t * freq * 2 * 2 * Math.PI) * Math.exp(-t * 4) * 0.2;
             } else if (type === 'synth') {
-                const freq = 220 + Math.sin(t * 5) * 20;
-                data[i] = (Math.random() * 0.1 + Math.sin(t * freq * 2 * Math.PI)) * 0.4;
+                const freq = 220;
+                data[i] = (Math.random() * 0.05 + Math.sin(t * freq * 2 * Math.PI + Math.sin(t*10))) * 0.4;
+            } else if (type === 'strings') {
+                const freq = 440;
+                let s = 0;
+                for(let k=1; k<5; k++) s += Math.sin(t * freq * k * 2 * Math.PI) / k;
+                data[i] = s * 0.2 * (t < 0.5 ? t * 2 : Math.exp(-(t-0.5)));
+            } else if (type === 'bell') {
+                data[i] = Math.sin(t * 800 * 2 * Math.PI) * Math.exp(-t * 5) * 0.5;
             }
         }
     }
@@ -68,6 +80,7 @@ function makeDraggable(element, trackObj) {
         startX = e.clientX;
         initialLeft = element.offsetLeft;
         element.style.cursor = 'grabbing';
+        element.style.zIndex = '100';
     });
 
     window.addEventListener('mousemove', (e) => {
@@ -78,13 +91,10 @@ function makeDraggable(element, trackObj) {
         const deltaX = e.clientX - startX;
         let newLeft = initialLeft + deltaX;
 
-        // Constraint to track bounds
         if (newLeft < 0) newLeft = 0;
         if (newLeft > parentWidth - element.offsetWidth) newLeft = parentWidth - element.offsetWidth;
 
         element.style.left = newLeft + 'px';
-        
-        // Update track offset percentage (0 to 1)
         trackObj.offsetPercent = newLeft / parentWidth;
     });
 
@@ -92,6 +102,7 @@ function makeDraggable(element, trackObj) {
         if (isDragging) {
             isDragging = false;
             element.style.cursor = 'grab';
+            element.style.zIndex = '';
         }
     });
 }
@@ -99,8 +110,8 @@ function makeDraggable(element, trackObj) {
 function addTrack(name, type, buffer = null) {
     initAudio();
     const newBuffer = buffer || generateSound(type);
+    const trackId = Date.now() + Math.random();
     
-    const trackId = Date.now();
     const trackObj = {
         id: trackId,
         type: type,
@@ -120,29 +131,32 @@ function addTrack(name, type, buffer = null) {
             <div class="track-type">${type.toUpperCase()}</div>
         </div>
         <div class="track-lane">
-            <div class="audio-clip ${type}" id="clip-${trackId}">
+            <div class="audio-clip ${type}" id="clip-${Math.floor(trackId)}">
                 <span>${name}</span>
             </div>
         </div>
     `;
     trackWrapper.appendChild(div);
 
-    const clip = div.querySelector(`#clip-${trackId}`);
+    const clip = div.querySelector(`.audio-clip`);
     makeDraggable(clip, trackObj);
 
     const emptyMsg = document.querySelector('.empty-timeline-msg');
     if (emptyMsg) emptyMsg.remove();
 }
 
-function playAll() {
+function togglePlay() {
     initAudio();
-    if (isPlaying) stopAll();
+    if (isPlaying) {
+        stopAll();
+    } else {
+        playAll();
+    }
+}
 
-    // Visual Timeline is 10 seconds long for this beta
-    const timelineDuration = 10.0;
-    const now = audioCtx.currentTime;
-
+function playAll() {
     activeSources = [];
+    const now = audioCtx.currentTime;
 
     tracks.forEach(track => {
         const source = audioCtx.createBufferSource();
@@ -152,17 +166,17 @@ function playAll() {
         track.gain.gain.value = document.getElementById('vol-slider').value;
         source.playbackRate.value = document.getElementById('speed-slider').value;
 
-        // Calculate when to start based on drag position
         const startTimeOffset = track.offsetPercent * timelineDuration;
         
-        // Only play if it fits in the timeline (simple logic)
-        source.start(now + startTimeOffset);
-        
-        activeSources.push(source);
+        if (startTimeOffset < timelineDuration) {
+            source.start(now + startTimeOffset);
+            activeSources.push(source);
+        }
     });
 
     isPlaying = true;
-    document.getElementById('play-btn').style.color = 'var(--accent)';
+    playIcon.innerText = "■"; // Square for stop
+    playIcon.style.color = "#ef4444";
     animatePlayhead(now, timelineDuration);
 }
 
@@ -172,7 +186,8 @@ function stopAll() {
     });
     activeSources = [];
     isPlaying = false;
-    document.getElementById('play-btn').style.color = 'white';
+    playIcon.innerText = "▶";
+    playIcon.style.color = "";
     if(animationFrame) cancelAnimationFrame(animationFrame);
     playhead.style.left = '0%';
     timeDisplay.innerText = "00:00:00";
@@ -203,7 +218,7 @@ function animatePlayhead(audioStartTime, duration) {
     step();
 }
 
-document.getElementById('play-btn').addEventListener('click', playAll);
+playBtn.addEventListener('click', togglePlay);
 document.getElementById('stop-btn').addEventListener('click', stopAll);
 
 document.getElementById('add-track-btn').addEventListener('click', () => {
@@ -249,7 +264,7 @@ document.getElementById('speed-slider').addEventListener('input', (e) => {
 
 document.getElementById('download-btn').addEventListener('click', () => {
     if(tracks.length === 0) return alert("Nothing to export.");
-    alert("Exporting mix... (Processing)");
+    alert("Mixing down to WAV... (Check downloads)");
 });
 
 document.getElementById('ai-chat-toggle').addEventListener('click', () => {
@@ -285,44 +300,76 @@ async function handleAiRequest() {
     try {
         if(typeof puter === 'undefined') throw new Error("Puter not loaded");
 
-        const prompt = `User text: "${text}". If they want drums, say "[ADD:drum]". If piano, "[ADD:piano]". If bass, "[ADD:bass]". If synth, "[ADD:synth]". Otherwise just chat.`;
+        const prompt = `User request: "${text}". 
+        Act as a music studio AI. Analyze the user's request. 
+        If they want a specific sound, output strictly one of these tokens:
+        [ADD:drum], [ADD:snare], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:synth], [ADD:strings], [ADD:bell].
+        If they want a genre, suggest instruments.
+        Output brief text followed by the token.`;
+        
         const response = await puter.ai.chat(prompt);
         
         typingIndicator.classList.add('hidden');
         
-        let displayMsg = response;
+        let displayMsg = response.replace(/\[ADD:\w+\]/g, '').trim();
+        if(!displayMsg) displayMsg = "Here is what I created for you.";
         let actionBtn = '';
         
         if (response.includes('[ADD:drum]')) {
-            displayMsg = "I can add a drum loop for you.";
-            actionBtn = `<div class="ai-apply-card"><button class="apply-btn" onclick="applyAi('drum', 'AI Drum Loop')">Apply Drums</button></div>`;
-        } else if (response.includes('[ADD:piano]')) {
-            displayMsg = "Here is a piano melody.";
-            actionBtn = `<div class="ai-apply-card"><button class="apply-btn" onclick="applyAi('piano', 'AI Piano')">Apply Piano</button></div>`;
+            actionBtn = createAiBtn('drum', 'AI Kick Pattern');
+        } else if (response.includes('[ADD:snare]')) {
+            actionBtn = createAiBtn('snare', 'AI Snare');
+        } else if (response.includes('[ADD:hihat]')) {
+            actionBtn = createAiBtn('hihat', 'AI Hi-Hats');
+        } else if (response.includes('[ADD:808]')) {
+            actionBtn = createAiBtn('808', 'AI 808 Bass');
         } else if (response.includes('[ADD:bass]')) {
-             displayMsg = "Adding deep bass.";
-             actionBtn = `<div class="ai-apply-card"><button class="apply-btn" onclick="applyAi('bass', 'AI Bass')">Apply Bass</button></div>`;
+             actionBtn = createAiBtn('bass', 'AI Deep Bass');
+        } else if (response.includes('[ADD:piano]')) {
+             actionBtn = createAiBtn('piano', 'AI Melody');
         } else if (response.includes('[ADD:synth]')) {
-             displayMsg = "Generating synth wave.";
-             actionBtn = `<div class="ai-apply-card"><button class="apply-btn" onclick="applyAi('synth', 'AI Synth')">Apply Synth</button></div>`;
+             actionBtn = createAiBtn('synth', 'AI Synth Lead');
+        } else if (response.includes('[ADD:strings]')) {
+             actionBtn = createAiBtn('strings', 'AI Strings');
+        } else if (response.includes('[ADD:bell]')) {
+             actionBtn = createAiBtn('bell', 'AI Cowbell');
         }
 
         appendMessage(displayMsg + actionBtn, true);
         
     } catch (e) {
         typingIndicator.classList.add('hidden');
-        appendMessage("AI unavailable. Try adding beats manually.", true);
+        appendMessage("I couldn't connect to the AI brain. Try adding instruments manually from the left sidebar.", true);
     }
+}
+
+function createAiBtn(type, name) {
+    return `<div class="ai-apply-card"><button class="apply-btn" onclick="applyAi('${type}', '${name}')">✚ Add ${name}</button></div>`;
 }
 
 window.applyAi = (type, name) => {
     addTrack(name, type);
-    appendMessage(`<i>Added ${name} to timeline.</i>`, true);
+    appendMessage(`<i>Added ${name} to the timeline.</i>`, true);
 };
 
 document.getElementById('send-chat').addEventListener('click', handleAiRequest);
 document.getElementById('chat-input').addEventListener('keypress', (e) => {
     if(e.key === 'Enter') handleAiRequest();
+});
+
+document.getElementById('login-btn').addEventListener('click', async () => {
+    if(typeof puter !== 'undefined') {
+        try {
+            const user = await puter.auth.signIn();
+            if(user) {
+                document.getElementById('login-btn').classList.add('hidden');
+                document.getElementById('user-profile').classList.remove('hidden');
+                document.getElementById('user-avatar').innerText = user.username[0].toUpperCase();
+            }
+        } catch(e) { console.log("Login popup closed"); }
+    } else {
+        alert("Authentication service not ready.");
+    }
 });
 
 if (typeof puter !== 'undefined') {
@@ -334,7 +381,3 @@ if (typeof puter !== 'undefined') {
         }
     }).catch(()=>{});
 }
-
-document.getElementById('login-btn').addEventListener('click', async () => {
-    if(typeof puter !== 'undefined') await puter.auth.signIn();
-});
