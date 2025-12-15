@@ -32,57 +32,66 @@
     <main class="editor-container">
         
         <section id="studio-controls" class="control-section">
-            <div class="toolbar-panel">
-                <div class="time-display-wrapper">
-                    <div class="time-label">TIME</div>
-                    <div class="time-display" id="time-display">00:00:00</div>
-                </div>
-                
-                <div class="transport-deck">
-                    <button id="record-btn" class="ctrl-btn record-btn" aria-label="Record">
-                        <div class="rec-dot"></div>
-                    </button>
-                    <button id="play-btn" class="ctrl-btn play-btn" aria-label="Play">
-                        <span id="play-icon">▶</span>
-                    </button>
-                    <button id="stop-btn" class="ctrl-btn stop-btn" aria-label="Stop">
-                        <span class="stop-icon">■</span>
-                    </button>
-                </div>
-
-                <button id="download-btn" class="export-btn">Export .WAV</button>
-            </div>
-
-            <div class="library-panel">
-                <div class="lib-row">
-                    <div class="select-wrapper">
-                        <select id="instrument-select" class="custom-select">
-                            <option value="drum">Kick Drum</option>
-                            <option value="snare">Trap Snare</option>
-                            <option value="hihat">Hi-Hats</option>
-                            <option value="808">808 Bass</option>
-                            <option value="piano">Grand Piano</option>
-                            <option value="guitar">Acoustic Guitar</option>
-                            <option value="flute">Jazz Flute</option>
-                            <option value="synth">Saw Synth</option>
-                            <option value="techno">Techno Lead</option>
-                            <option value="strings">Orchestral Strings</option>
-                            <option value="bell">Cowbell</option>
-                        </select>
+            <div class="scrollable-content">
+                <div class="toolbar-panel">
+                    <div class="time-display-wrapper">
+                        <div class="time-label">TIME</div>
+                        <div class="time-display" id="time-display">00:00:00</div>
                     </div>
-                    <button id="add-track-btn" class="add-btn">
-                        <span>+</span> Add
-                    </button>
+                    
+                    <div class="transport-deck">
+                        <button id="record-btn" class="ctrl-btn record-btn" aria-label="Record">
+                            <div class="rec-dot"></div>
+                        </button>
+                        <button id="play-btn" class="ctrl-btn play-btn" aria-label="Play">
+                            <span id="play-icon">▶</span>
+                        </button>
+                        <button id="stop-btn" class="ctrl-btn stop-btn" aria-label="Stop">
+                            <span class="stop-icon">■</span>
+                        </button>
+                    </div>
+
+                    <button id="download-btn" class="export-btn">Export .WAV</button>
                 </div>
 
-                <div class="mixer-row">
-                    <div class="effect-control">
-                        <label>Speed</label>
-                        <input type="range" id="speed-slider" min="0.5" max="2" step="0.1" value="1">
+                <div class="library-panel">
+                    <div class="lib-row">
+                        <div class="select-wrapper">
+                            <select id="instrument-select" class="custom-select">
+                                <option value="drum">Kick Drum</option>
+                                <option value="lofi">Lo-Fi Kick</option>
+                                <option value="snare">Trap Snare</option>
+                                <option value="clap">Studio Clap</option>
+                                <option value="hihat">Hi-Hats</option>
+                                <option value="808">808 Bass</option>
+                                <option value="bass">Deep Bass</option>
+                                <option value="piano">Grand Piano</option>
+                                <option value="guitar">Acoustic Guitar</option>
+                                <option value="electric">Electric Guitar</option>
+                                <option value="harp">Harp</option>
+                                <option value="violin">Violin</option>
+                                <option value="sax">Saxophone</option>
+                                <option value="flute">Jazz Flute</option>
+                                <option value="synth">Saw Synth</option>
+                                <option value="techno">Techno Lead</option>
+                                <option value="strings">Orchestral Strings</option>
+                                <option value="bell">Cowbell</option>
+                            </select>
+                        </div>
+                        <button id="add-track-btn" class="add-btn">
+                            <span>+</span> Add
+                        </button>
                     </div>
-                    <div class="effect-control">
-                        <label>Volume</label>
-                        <input type="range" id="vol-slider" min="0" max="2" step="0.1" value="1">
+
+                    <div class="mixer-row">
+                        <div class="effect-control">
+                            <label>Speed</label>
+                            <input type="range" id="speed-slider" min="0.5" max="2" step="0.1" value="1">
+                        </div>
+                        <div class="effect-control">
+                            <label>Volume</label>
+                            <input type="range" id="vol-slider" min="0" max="2" step="0.1" value="1">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -117,7 +126,7 @@
         </div>
         <div id="chat-history" class="chat-history">
             <div class="chat-bubble ai-bubble">
-                I can create beats for you. Try asking for "Jazz Flute", "Techno Beat", or "Sad Piano".
+                Hi my name is lumi! What music do you want me to create?
             </div>
         </div>
         
