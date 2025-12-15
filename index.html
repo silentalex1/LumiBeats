@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>lumi beats - beta</title>
     <meta name="description" content="Make your song come true for free.">
-    <link rel="icon" href="data:image/x-icon;base64,AAABAAEAAQEAAAEAIAAwAAAAFgAAACgAAAABAAAAAgAAAAEAIAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAA==">
     <link rel="stylesheet" href="style.css">
     <script src="https://js.puter.com/v2/"></script>
 </head>
@@ -52,23 +51,36 @@
                             <span>■</span>
                         </button>
                         <div class="sep"></div>
+                        <button id="split-btn" class="transport-btn split hidden" title="Split Clip (Ctrl+C)">
+                            <span>✂</span>
+                        </button>
                         <button id="delete-btn" class="transport-btn delete hidden">
                             <span>🗑</span>
                         </button>
                     </div>
 
                     <div class="export-group">
+                        <div class="quality-selector">
+                            <select id="video-quality" class="format-select">
+                                <option value="480">480p</option>
+                                <option value="1080" selected>1080p</option>
+                                <option value="1440">2K+</option>
+                                <option value="2160">4K+</option>
+                                <option value="4320">8K+</option>
+                            </select>
+                        </div>
                         <select id="export-format" class="format-select">
                             <option value="wav">.WAV</option>
                             <option value="mp3">.MP3</option>
                             <option value="mp4">.MP4</option>
+                            <option value="audio">Audio Only</option>
                         </select>
-                        <button id="download-btn" class="action-btn">Export</button>
+                        <button id="export-trigger-btn" class="action-btn">Export</button>
                     </div>
                 </div>
 
                 <div class="tools-grid">
-                    <div class="tool-column">
+                    <div class="tool-column media-column">
                         <label class="column-label">ADD MEDIA</label>
                         <div class="input-row">
                             <div class="dropdown-container">
@@ -100,8 +112,8 @@
                         </div>
                     </div>
 
-                    <div class="tool-column">
-                        <label class="column-label">MIXER</label>
+                    <div class="tool-column mixer-column">
+                        <label class="column-label">MIXER & QUALITY</label>
                         <div class="slider-row">
                             <div class="slider-wrap">
                                 <label>Speed</label>
@@ -148,11 +160,9 @@
                 Hi my name is lumI! What music do you want me to create?
             </div>
         </div>
-        
         <div id="typing-dots" class="typing hidden">
             <span></span><span></span><span></span>
         </div>
-
         <div class="input-area">
             <input type="text" id="chat-input" placeholder="e.g. 'Make a full Lo-Fi song'">
             <button id="send-chat" class="send-btn">➤</button>
