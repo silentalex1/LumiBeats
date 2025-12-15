@@ -87,12 +87,9 @@ body {
     background: var(--bg-main);
     border-bottom: 1px solid var(--border);
     transition: max-height 0.3s ease, opacity 0.3s ease;
-    overflow-y: auto; 
-    -webkit-overflow-scrolling: touch;
-    max-height: 350px;
+    overflow: hidden;
+    max-height: 400px; 
     opacity: 1;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) var(--bg-main);
 }
 
 .control-section.collapsed {
@@ -101,8 +98,10 @@ body {
     border-bottom: none;
 }
 
+/* New Scrollable Container for Mobile */
 .scrollable-content {
-    padding-bottom: 10px;
+    width: 100%;
+    height: 100%;
 }
 
 .toolbar-panel {
@@ -147,11 +146,13 @@ body {
     background: var(--bg-panel);
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px;
 }
 
+.panel-label { font-size: 0.7rem; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+
 .lib-row, .mixer-row {
-    display: flex; gap: 15px; align-items: center;
+    display: flex; gap: 15px; align-items: center; width: 100%;
 }
 
 .select-wrapper { position: relative; flex: 1; }
@@ -234,19 +235,16 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 18px; height:
 .audio-clip:active { cursor: grabbing; transform: scale(1.02); box-shadow: 0 8px 16px rgba(0,0,0,0.5); z-index: 10; }
 
 .audio-clip.drum { background: #db2777; }
-.audio-clip.lofi { background: #831843; }
 .audio-clip.snare { background: #be185d; }
-.audio-clip.clap { background: #9d174d; }
 .audio-clip.hihat { background: #f472b6; color: black; }
 .audio-clip.808 { background: #ea580c; }
-.audio-clip.bass { background: #ca8a04; }
 .audio-clip.piano { background: #0891b2; }
 .audio-clip.guitar { background: #d97706; }
-.audio-clip.electric { background: #b45309; }
-.audio-clip.harp { background: #06b6d4; }
-.audio-clip.violin { background: #713f12; }
-.audio-clip.sax { background: #eab308; color: black; }
 .audio-clip.flute { background: #059669; }
+.audio-clip.sax { background: #eab308; color: black; }
+.audio-clip.harp { background: #fca5a5; color: black; }
+.audio-clip.choir { background: #ddd6fe; color: black; }
+.audio-clip.lofi { background: #78716c; }
 .audio-clip.techno { background: #7c3aed; border: 2px solid #a78bfa; }
 .audio-clip.synth { background: #6366f1; }
 .audio-clip.strings { background: #16a34a; }
@@ -301,13 +299,24 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 18px; height:
     .menu-btn { display: block; }
     .nav-btn .btn-label { display: none; }
     
-    .control-section { overflow-y: auto; max-height: 40vh; }
+    /* Control Section - Mobile Scroll Handling */
+    .control-section {
+        max-height: 45vh; /* Limit height to allow scrolling */
+        overflow-y: auto; /* Enable vertical scroll */
+        -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+    }
+    
+    .scrollable-content {
+        display: flex;
+        flex-direction: column;
+    }
+
     .toolbar-panel { flex-wrap: wrap; height: auto; gap: 15px; justify-content: center; padding: 20px 15px; }
     .time-display-wrapper { order: 1; width: 100%; text-align: center; }
     .transport-deck { order: 2; width: 100%; justify-content: center; padding: 12px 30px; }
     .export-btn { order: 3; width: 100%; }
     
-    .library-panel { flex-direction: column; padding: 20px 15px; gap: 20px; }
+    .library-panel { flex-direction: column; padding: 20px 15px; gap: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
     .lib-row { flex-direction: column; width: 100%; }
     .select-wrapper { width: 100%; }
     .add-btn { width: 100%; }
