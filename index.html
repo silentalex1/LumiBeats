@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>lumi beats - beta</title>
     <meta name="description" content="make your song come true for free.">
     <link rel="stylesheet" href="style.css">
@@ -10,70 +10,89 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="brand">
-            <h1 class="logo">lumi beats</h1>
-            <span class="badge">beta</span>
+        <div class="logo-container">
+            <div class="logo-icon">LB</div>
+            <div class="logo-text">lumi beats <span class="badge">BETA</span></div>
         </div>
-        <div class="nav-actions">
-            <button id="ai-chat-toggle" class="btn-secondary">Ai Chat</button>
-            <button id="login-btn" class="btn-primary">Login</button>
-            <div id="user-profile" class="hidden">
-                <span id="username-display"></span>
+        <div class="nav-right">
+            <button id="ai-chat-toggle" class="nav-btn ai-btn">
+                <span class="btn-icon">✨</span> <span class="btn-label">AI Chat</span>
+            </button>
+            <button id="login-btn" class="nav-btn login-btn">Login</button>
+            <div id="user-profile" class="user-profile hidden">
+                <div class="avatar-circle" id="user-avatar">U</div>
             </div>
         </div>
     </nav>
 
-    <main class="main-container">
-        <div class="controls-wrapper">
-            <div class="transport-controls">
-                <button id="record-btn" class="ctrl-btn record">
-                    <span class="icon">●</span> Rec
-                </button>
-                <button id="play-btn" class="ctrl-btn play">
-                    <span class="icon">▶</span> Play
-                </button>
-                <button id="stop-btn" class="ctrl-btn stop">
-                    <span class="icon">■</span> Stop
-                </button>
+    <main class="studio-container">
+        <section class="status-display">
+            <div id="status-text" class="status-text">Ready to Record</div>
+            <div class="visualizer-bar">
+                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                <div class="bar"></div><div class="bar"></div>
             </div>
-            <button id="download-btn" class="action-btn">Download Song</button>
-        </div>
+        </section>
 
-        <div class="workspace">
-            <div class="track-area">
-                <div id="track-list" class="track-list">
-                    <div class="empty-state">
-                        <p>No beats recorded yet. Press Record to start.</p>
-                    </div>
-                </div>
+        <section class="transport-deck">
+            <div class="transport-row">
+                <button id="record-btn" class="transport-btn record-btn">
+                    <div class="inner-circle"></div>
+                </button>
+                <button id="play-btn" class="transport-btn play-btn">
+                    <div class="play-icon"></div>
+                </button>
+                <button id="stop-btn" class="transport-btn stop-btn">
+                    <div class="stop-icon"></div>
+                </button>
             </div>
+            <div class="time-display">00:00:00</div>
+        </section>
 
-            <div class="properties-bar">
-                <div class="slider-group">
-                    <label>Volume</label>
-                    <input type="range" id="volume-slider" min="0" max="2" step="0.1" value="1">
+        <section class="mixer-panel">
+            <div class="panel-header">
+                <h3>Studio Controls</h3>
+                <button id="download-btn" class="action-btn">Download .WAV</button>
+            </div>
+            
+            <div class="sliders-container">
+                <div class="slider-wrapper">
+                    <label>Master Volume</label>
+                    <input type="range" id="volume-slider" min="0" max="2" step="0.1" value="1" class="custom-range">
                 </div>
-                <div class="slider-group">
-                    <label>Pitch</label>
-                    <input type="range" id="pitch-slider" min="0.5" max="2" step="0.1" value="1">
+                <div class="slider-wrapper">
+                    <label>Playback Speed / Pitch</label>
+                    <input type="range" id="pitch-slider" min="0.5" max="2" step="0.1" value="1" class="custom-range">
                 </div>
             </div>
-        </div>
+        </section>
+
+        <section class="tracks-container">
+            <h3>Your Tracks</h3>
+            <div id="track-list" class="track-list">
+                <div class="empty-state">
+                    <p>Tap the Red Circle to start recording your beat.</p>
+                </div>
+            </div>
+        </section>
     </main>
 
+    <div id="ai-overlay" class="ai-overlay hidden"></div>
     <div id="ai-chat-widget" class="ai-chat-widget hidden">
         <div class="chat-header">
-            <h3>Lumi AI</h3>
-            <button id="close-chat" class="close-btn">✕</button>
+            <div class="chat-title">
+                <span class="sparkle">✨</span> Lumi AI Studio
+            </div>
+            <button id="close-chat" class="icon-btn">✕</button>
         </div>
         <div id="chat-history" class="chat-history">
-            <div class="message ai-message">
-                Thank you for using lumi beats AI. What do you need help with your music beat?
+            <div class="chat-bubble ai-bubble">
+                Thank you for using Lumi Beats AI. What do you need help with your music beat?
             </div>
         </div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Ask about beats...">
-            <button id="send-chat" class="send-btn">Send</button>
+        <div class="chat-input-wrapper">
+            <input type="text" id="chat-input" placeholder="Ask for melody ideas...">
+            <button id="send-chat" class="send-btn">➤</button>
         </div>
     </div>
 
