@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>lumi beats - beta</title>
     <meta name="description" content="make your song come true for free.">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <link rel="stylesheet" href="style.css">
     <script src="https://js.puter.com/v2/"></script>
 </head>
@@ -39,29 +40,40 @@
 
         <section class="timeline-workspace">
             <div class="library-sidebar">
-                <div class="sidebar-header">Add Media</div>
-                <button class="lib-btn" id="add-mic-btn">+ Mic / Record</button>
-                <button class="lib-btn" id="add-drums-btn">+ Basic Drums</button>
-                <button class="lib-btn" id="add-synth-btn">+ Synth Loop</button>
+                <div class="sidebar-header">Add Instruments</div>
                 
-                <div class="sidebar-header" style="margin-top: 20px;">Effects</div>
+                <div class="control-group">
+                    <select id="instrument-select" class="custom-select">
+                        <option value="drum">Kick Drum Loop</option>
+                        <option value="snare">Snare/Clap</option>
+                        <option value="hihat">Hi-Hats</option>
+                        <option value="bass">Deep Bass</option>
+                        <option value="piano">Electric Piano</option>
+                        <option value="synth">Neon Synth</option>
+                    </select>
+                    <button id="add-track-btn" class="add-btn">+ Add to Timeline</button>
+                </div>
+
+                <div class="sidebar-header" style="margin-top: 20px;">Mixer</div>
                 <div class="effect-control">
-                    <label>Speed</label>
+                    <label>Tempo / Speed</label>
                     <input type="range" id="speed-slider" min="0.5" max="2" step="0.1" value="1">
                 </div>
                 <div class="effect-control">
-                    <label>Volume</label>
+                    <label>Master Volume</label>
                     <input type="range" id="vol-slider" min="0" max="2" step="0.1" value="1">
                 </div>
             </div>
 
             <div class="timeline-area" id="timeline-area">
+                <div class="ruler">
+                    <span>0s</span><span>2s</span><span>4s</span><span>6s</span><span>8s</span><span>10s</span>
+                </div>
                 <div class="playhead-container">
                     <div id="playhead" class="playhead"></div>
                 </div>
                 <div id="tracks-wrapper" class="tracks-wrapper">
-                    <!-- Tracks render here -->
-                    <div class="empty-timeline-msg">Add audio or ask AI to start...</div>
+                    <div class="empty-timeline-msg">Select a sound and click Add, or record mic.</div>
                 </div>
             </div>
         </section>
@@ -78,7 +90,7 @@
         </div>
         <div id="chat-history" class="chat-history">
             <div class="chat-bubble ai-bubble">
-                I'm ready. I can add drums, melodies, or suggest ideas. What's the vibe?
+                I can help you build your track. Ask me to add instruments or suggest a genre.
             </div>
         </div>
         
@@ -87,7 +99,7 @@
         </div>
 
         <div class="chat-input-wrapper">
-            <input type="text" id="chat-input" placeholder="e.g., 'Add a chill beat'">
+            <input type="text" id="chat-input" placeholder="Type here...">
             <button id="send-chat" class="send-btn">➤</button>
         </div>
     </div>
