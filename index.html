@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>lumi beats - beta</title>
     <meta name="description" content="make your song come true for free.">
-    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <link rel="icon" href="data:image/x-icon;base64,AAABAAEAAQEAAAEAIAAwAAAAFgAAACgAAAABAAAAAgAAAAEAIAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAA==">
     <link rel="stylesheet" href="style.css">
     <script src="https://js.puter.com/v2/"></script>
 </head>
@@ -31,32 +31,41 @@
         <section class="toolbar-panel">
             <div class="time-display" id="time-display">00:00:00</div>
             <div class="transport-controls">
-                <button id="record-btn" class="t-btn record-btn"></button>
-                <button id="play-btn" class="t-btn play-btn">▶</button>
-                <button id="stop-btn" class="t-btn stop-btn">■</button>
+                <button id="record-btn" class="t-btn record-btn" title="Record Microphone"></button>
+                <button id="play-btn" class="t-btn play-btn" title="Play/Stop">
+                    <span id="play-icon">▶</span>
+                </button>
+                <button id="stop-btn" class="t-btn stop-btn" title="Reset">■</button>
             </div>
-            <button id="download-btn" class="export-btn">Export</button>
+            <button id="download-btn" class="export-btn">Export .WAV</button>
         </section>
 
         <section class="timeline-workspace">
             <div class="library-sidebar">
-                <div class="sidebar-header">Add Instruments</div>
+                <div class="sidebar-header">Studio Library</div>
                 
                 <div class="control-group">
-                    <select id="instrument-select" class="custom-select">
-                        <option value="drum">Kick Drum Loop</option>
-                        <option value="snare">Snare/Clap</option>
-                        <option value="hihat">Hi-Hats</option>
-                        <option value="bass">Deep Bass</option>
-                        <option value="piano">Electric Piano</option>
-                        <option value="synth">Neon Synth</option>
-                    </select>
-                    <button id="add-track-btn" class="add-btn">+ Add to Timeline</button>
+                    <label class="input-label">Select Instrument</label>
+                    <div class="select-wrapper">
+                        <select id="instrument-select" class="custom-select">
+                            <option value="drum">Kick Drum</option>
+                            <option value="snare">Trap Snare</option>
+                            <option value="hihat">Hi-Hats</option>
+                            <option value="808">808 Bass</option>
+                            <option value="piano">Grand Piano</option>
+                            <option value="synth">Saw Synth</option>
+                            <option value="strings">Orchestral Strings</option>
+                            <option value="bell">Cowbell</option>
+                        </select>
+                    </div>
+                    <button id="add-track-btn" class="add-btn">
+                        <span>+</span> Add to Timeline
+                    </button>
                 </div>
 
-                <div class="sidebar-header" style="margin-top: 20px;">Mixer</div>
+                <div class="sidebar-header" style="margin-top: 25px;">Mixer Controls</div>
                 <div class="effect-control">
-                    <label>Tempo / Speed</label>
+                    <label>Playback Speed</label>
                     <input type="range" id="speed-slider" min="0.5" max="2" step="0.1" value="1">
                 </div>
                 <div class="effect-control">
@@ -67,13 +76,16 @@
 
             <div class="timeline-area" id="timeline-area">
                 <div class="ruler">
-                    <span>0s</span><span>2s</span><span>4s</span><span>6s</span><span>8s</span><span>10s</span>
+                    <span>0s</span><span>2s</span><span>4s</span><span>6s</span><span>8s</span><span>10s</span><span>12s</span><span>14s</span>
                 </div>
                 <div class="playhead-container">
                     <div id="playhead" class="playhead"></div>
                 </div>
                 <div id="tracks-wrapper" class="tracks-wrapper">
-                    <div class="empty-timeline-msg">Select a sound and click Add, or record mic.</div>
+                    <div class="empty-timeline-msg">
+                        <p>Studio Ready.</p>
+                        <p style="font-size: 0.8rem; opacity: 0.6;">Select an instrument or ask AI to start.</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -84,13 +96,13 @@
     <div id="ai-chat-widget" class="ai-chat-widget hidden">
         <div class="chat-header">
             <div class="chat-title">
-                <span class="sparkle">✨</span> Lumi AI
+                <span class="sparkle">✨</span> Lumi AI Studio
             </div>
             <button id="close-chat" class="icon-btn">✕</button>
         </div>
         <div id="chat-history" class="chat-history">
             <div class="chat-bubble ai-bubble">
-                I can help you build your track. Ask me to add instruments or suggest a genre.
+                Hello! I'm Lumi. I can generate beats, melodies, or basslines for you. What are we making today?
             </div>
         </div>
         
@@ -99,7 +111,7 @@
         </div>
 
         <div class="chat-input-wrapper">
-            <input type="text" id="chat-input" placeholder="Type here...">
+            <input type="text" id="chat-input" placeholder="e.g. 'Make a trap beat'">
             <button id="send-chat" class="send-btn">➤</button>
         </div>
     </div>
