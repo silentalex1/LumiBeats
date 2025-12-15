@@ -1,11 +1,12 @@
 let audioContext;
 let mediaRecorder;
 let audioChunks = [];
-let recordedBuffer = null;
+let audioBuffer = null;
 let sourceNode = null;
 let gainNode = null;
 let isRecording = false;
 let isPlaying = false;
+let playbackStartTime = 0;
 
 const loginBtn = document.getElementById('login-btn');
 const userInfo = document.getElementById('user-info');
@@ -14,16 +15,17 @@ const recordBtn = document.getElementById('record-btn');
 const playBtn = document.getElementById('play-btn');
 const stopBtn = document.getElementById('stop-btn');
 const downloadBtn = document.getElementById('download-btn');
-const trackContainer = document.getElementById('track-container');
+const statusText = document.getElementById('status-text');
 const volumeSlider = document.getElementById('volume-slider');
 const pitchSlider = document.getElementById('pitch-slider');
+const visualContainer = document.getElementById('track-visual-container');
 
-const chatToggleBtn = document.getElementById('ai-chat-toggle');
-const chatWindow = document.getElementById('ai-chat-interface');
-const closeChatBtn = document.getElementById('close-chat');
+const aiChatToggle = document.getElementById('ai-chat-toggle');
+const aiChatInterface = document.getElementById('ai-chat-interface');
+const closeChatBtn = document.getElementById('close-chat-btn');
+const chatHistory = document.getElementById('chat-history');
 const chatInput = document.getElementById('chat-input');
 const sendChatBtn = document.getElementById('send-chat-btn');
-const chatHistory = document.getElementById('chat-history');
 
 function initAudio() {
     if (!audioContext) {
@@ -34,99 +36,55 @@ function initAudio() {
     }
 }
 
-loginBtn.addEventListener('click', async () => {
+async function handleLogin() {
     try {
         const user = await puter.auth.signIn();
         if (user) {
             loginBtn.classList.add('hidden');
             userInfo.classList.remove('hidden');
-            usernameDisplay.innerText = `Hi, ${user.username}`;
+            usernameDisplay.innerText = user.username;
         }
     } catch (error) {
         console.error(error);
     }
-});
+}
 
 puter.auth.getUser().then(user => {
     if (user) {
         loginBtn.classList.add('hidden');
         userInfo.classList.remove('hidden');
-        usernameDisplay.innerText = `Hi, ${user.username}`;
+        usernameDisplay.innerText = user.username;
     }
 });
 
-chatToggleBtn.addEventListener('click', () => {
-    chatWindow.classList.remove('hidden');
-});
-
-closeChatBtn.addEventListener('click', () => {
-    chatWindow.classList.add('hidden');
-});
-
-async function handleChatSend() {
-    const text = chatInput.value.trim();
-    if (!text) return;
-
-    appendMessage(text, 'user-msg');
-    chatInput.value = '';
-
-    const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'message ai-msg';
-    loadingDiv.innerText = '...';
-    chatHistory.appendChild(loadingDiv);
-    chatHistory.scrollTop = chatHistory.scrollHeight;
-
-    try {
-        const response = await puter.ai.chat(`You are a helpful music production assistant. Keep answers concise. User asks: ${text}`);
-        chatHistory.removeChild(loadingDiv);
-        appendMessage(response, 'ai-msg');
-    } catch (err) {
-        chatHistory.removeChild(loadingDiv);
-        appendMessage("I couldn't reach the server right now.", 'ai-msg');
-    }
-}
-
-function appendMessage(text, className) {
-    const div = document.createElement('div');
-    div.className = `message ${className}`;
-    div.innerText = text;
-    chatHistory.appendChild(div);
-    chatHistory.scrollTop = chatHistory.scrollHeight;
-}
-
-sendChatBtn.addEventListener('click', handleChatSend);
-chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleChatSend();
-});
+loginBtn.addEventListener('click', handleLogin);
 
 recordBtn.addEventListener('click', async () => {
     initAudio();
-
     if (!isRecording) {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
-
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
-
+            
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            
             mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                const arrayBuffer = await audioBlob.arrayBuffer();
-                recordedBuffer = await audioContext.decodeAudioData(arrayBuffer);
-                renderTrackUI("Recorded Audio");
+                const blob = new Blob(audioChunks, { type: 'audio/wav' });
+                const arrayBuffer = await blob.arrayBuffer();
+                audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                statusText.innerText = "Sound captured. Ready to edit.";
+                visualContainer.innerHTML = '<div style="width: 100%; height: 100%; background: #2c2c2c; display:flex; align-items:center; justify-content:center; color:#555;">Waveform Ready</div>';
             };
 
             mediaRecorder.start();
             isRecording = true;
-            recordBtn.innerText = "● Stop";
+            recordBtn.innerText = "● Stop Rec";
             recordBtn.classList.add('recording');
             playBtn.disabled = true;
-
+            statusText.innerText = "Recording...";
         } catch (err) {
-            alert("Microphone access is required to record.");
+            alert("Microphone access required.");
         }
     } else {
         mediaRecorder.stop();
@@ -138,71 +96,126 @@ recordBtn.addEventListener('click', async () => {
 });
 
 function playSound() {
-    if (!recordedBuffer) return;
-
+    if (!audioBuffer) return;
+    
     sourceNode = audioContext.createBufferSource();
-    sourceNode.buffer = recordedBuffer;
-
     gainNode = audioContext.createGain();
     
+    sourceNode.buffer = audioBuffer;
     sourceNode.connect(gainNode);
     gainNode.connect(audioContext.destination);
-
-    applySettings();
-
+    
+    gainNode.gain.value = volumeSlider.value;
+    sourceNode.playbackRate.value = pitchSlider.value;
+    
     sourceNode.start(0);
     isPlaying = true;
+    statusText.innerText = "Playing...";
     
+    const bar = document.createElement('div');
+    bar.className = 'track-bar';
+    visualContainer.innerHTML = '';
+    visualContainer.appendChild(bar);
+    
+    setTimeout(() => {
+        bar.style.width = '100%';
+        bar.style.transitionDuration = (audioBuffer.duration / pitchSlider.value) + 's';
+    }, 50);
+
     sourceNode.onended = () => {
         isPlaying = false;
+        statusText.innerText = "Playback finished.";
+        visualContainer.innerHTML = '';
     };
-}
-
-function stopSound() {
-    if (sourceNode && isPlaying) {
-        sourceNode.stop();
-        isPlaying = false;
-    }
 }
 
 playBtn.addEventListener('click', () => {
     initAudio();
-    if(recordedBuffer) {
-        stopSound();
+    if (isPlaying && sourceNode) {
+        sourceNode.stop();
+    }
+    if (audioBuffer) {
         playSound();
+    } else {
+        statusText.innerText = "Please record a sound first.";
     }
 });
 
-stopBtn.addEventListener('click', stopSound);
+stopBtn.addEventListener('click', () => {
+    if (isPlaying && sourceNode) {
+        sourceNode.stop();
+        isPlaying = false;
+        statusText.innerText = "Stopped.";
+        visualContainer.innerHTML = '';
+    }
+});
 
-function applySettings() {
-    if (gainNode) gainNode.gain.value = volumeSlider.value;
-    if (sourceNode) sourceNode.playbackRate.value = pitchSlider.value;
-}
+volumeSlider.addEventListener('input', () => {
+    if (gainNode && isPlaying) {
+        gainNode.gain.value = volumeSlider.value;
+    }
+});
 
-volumeSlider.addEventListener('input', applySettings);
-pitchSlider.addEventListener('input', applySettings);
-
-function renderTrackUI(name) {
-    trackContainer.innerHTML = '';
-    const div = document.createElement('div');
-    div.className = 'track-item';
-    div.innerHTML = `<span>${name}</span><span>Ready</span>`;
-    trackContainer.appendChild(div);
-}
+pitchSlider.addEventListener('input', () => {
+    if (sourceNode && isPlaying) {
+        sourceNode.playbackRate.value = pitchSlider.value;
+    }
+});
 
 downloadBtn.addEventListener('click', () => {
-    if (!audioChunks.length) {
-        alert("Please record something first.");
+    if (audioChunks.length === 0) {
+        alert("No beat created yet.");
         return;
     }
     const blob = new Blob(audioChunks, { type: 'audio/wav' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    document.body.appendChild(a);
-    a.style = 'display: none';
+    a.style.display = 'none';
     a.href = url;
     a.download = 'lumi-beat.wav';
+    document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
+});
+
+function addMessage(text, type) {
+    const div = document.createElement('div');
+    div.className = `message ${type}`;
+    div.innerText = text;
+    chatHistory.appendChild(div);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+}
+
+aiChatToggle.addEventListener('click', () => {
+    aiChatInterface.classList.remove('hidden');
+    if (chatHistory.children.length === 0) {
+        addMessage("Thank you for using lumi beats AI. What do you need help with your music beat?", 'ai');
+    }
+});
+
+closeChatBtn.addEventListener('click', () => {
+    aiChatInterface.classList.add('hidden');
+});
+
+async function sendToAI() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    addMessage(text, 'user');
+    chatInput.value = '';
+    
+    try {
+        const response = await puter.ai.chat(text);
+        addMessage(response, 'ai');
+    } catch (err) {
+        addMessage("I'm having trouble connecting right now.", 'ai');
+    }
+}
+
+sendChatBtn.addEventListener('click', sendToAI);
+
+chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        sendToAI();
+    }
 });
