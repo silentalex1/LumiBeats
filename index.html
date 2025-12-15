@@ -55,42 +55,45 @@
                 </div>
 
                 <div class="library-panel">
-                    <div class="lib-row">
-                        <div class="select-wrapper">
-                            <select id="instrument-select" class="custom-select">
-                                <option value="drum">Kick Drum</option>
-                                <option value="lofi">Lo-Fi Kick</option>
-                                <option value="snare">Trap Snare</option>
-                                <option value="clap">Studio Clap</option>
-                                <option value="hihat">Hi-Hats</option>
-                                <option value="808">808 Bass</option>
-                                <option value="bass">Deep Bass</option>
-                                <option value="piano">Grand Piano</option>
-                                <option value="guitar">Acoustic Guitar</option>
-                                <option value="electric">Electric Guitar</option>
-                                <option value="harp">Harp</option>
-                                <option value="violin">Violin</option>
-                                <option value="sax">Saxophone</option>
-                                <option value="flute">Jazz Flute</option>
-                                <option value="synth">Saw Synth</option>
-                                <option value="techno">Techno Lead</option>
-                                <option value="strings">Orchestral Strings</option>
-                                <option value="bell">Cowbell</option>
-                            </select>
+                    <div class="lib-section">
+                        <label class="panel-label">INSTRUMENTS</label>
+                        <div class="lib-row">
+                            <div class="select-wrapper">
+                                <select id="instrument-select" class="custom-select">
+                                    <option value="drum">Kick Drum</option>
+                                    <option value="snare">Trap Snare</option>
+                                    <option value="hihat">Hi-Hats</option>
+                                    <option value="808">808 Bass</option>
+                                    <option value="piano">Grand Piano</option>
+                                    <option value="guitar">Acoustic Guitar</option>
+                                    <option value="flute">Jazz Flute</option>
+                                    <option value="sax">Saxophone</option>
+                                    <option value="harp">Harp</option>
+                                    <option value="choir">Angelic Choir</option>
+                                    <option value="lofi">Lo-Fi Beat</option>
+                                    <option value="synth">Saw Synth</option>
+                                    <option value="techno">Techno Lead</option>
+                                    <option value="strings">Orchestral Strings</option>
+                                    <option value="bell">Cowbell</option>
+                                </select>
+                            </div>
+                            <button id="add-track-btn" class="add-btn">
+                                <span>+</span> Add to Timeline
+                            </button>
                         </div>
-                        <button id="add-track-btn" class="add-btn">
-                            <span>+</span> Add
-                        </button>
                     </div>
 
-                    <div class="mixer-row">
-                        <div class="effect-control">
-                            <label>Speed</label>
-                            <input type="range" id="speed-slider" min="0.5" max="2" step="0.1" value="1">
-                        </div>
-                        <div class="effect-control">
-                            <label>Volume</label>
-                            <input type="range" id="vol-slider" min="0" max="2" step="0.1" value="1">
+                    <div class="lib-section">
+                        <label class="panel-label">MIXER</label>
+                        <div class="mixer-row">
+                            <div class="effect-control">
+                                <label>Speed</label>
+                                <input type="range" id="speed-slider" min="0.5" max="2" step="0.1" value="1">
+                            </div>
+                            <div class="effect-control">
+                                <label>Volume</label>
+                                <input type="range" id="vol-slider" min="0" max="2" step="0.1" value="1">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -108,7 +111,7 @@
                 <div id="tracks-wrapper" class="tracks-wrapper">
                     <div class="empty-timeline-msg">
                         <p>Studio Ready.</p>
-                        <p style="font-size: 0.8rem; opacity: 0.6;">Add instruments or record to start.</p>
+                        <p style="font-size: 0.8rem; opacity: 0.6;">Add instruments or ask AI to start.</p>
                     </div>
                 </div>
             </div>
@@ -126,7 +129,7 @@
         </div>
         <div id="chat-history" class="chat-history">
             <div class="chat-bubble ai-bubble">
-                Hi my name is lumi! What music do you want me to create?
+                Hi my name is lumI! What music do you want me to create?
             </div>
         </div>
         
@@ -135,7 +138,7 @@
         </div>
 
         <div class="chat-input-wrapper">
-            <input type="text" id="chat-input" placeholder="Describe a sound...">
+            <input type="text" id="chat-input" placeholder="e.g. 'Make a full Lo-Fi song'">
             <button id="send-chat" class="send-btn">➤</button>
         </div>
     </div>
