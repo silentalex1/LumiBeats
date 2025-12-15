@@ -11,59 +11,68 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo-container">
+        <div class="logo-group">
             <div class="logo-icon">LB</div>
             <div class="logo-text">lumi beats <span class="badge">BETA</span></div>
         </div>
-        <div class="nav-right">
-            <button id="mobile-menu-btn" class="nav-btn menu-btn" title="Toggle Studio Controls">
-                =
-            </button>
+        <div class="nav-controls">
+            <button id="mobile-menu-btn" class="nav-btn menu-btn">=</button>
             <button id="ai-chat-toggle" class="nav-btn ai-btn">
-                <span class="btn-icon">✨</span> <span class="btn-label">AI Studio</span>
+                <span class="icon">✨</span> AI Studio
             </button>
             <button id="login-btn" class="nav-btn login-btn">Login</button>
-            <div id="user-profile" class="user-profile hidden">
-                <div class="avatar-circle" id="user-avatar">U</div>
+            <div id="user-profile" class="user-badge hidden">
+                <div class="avatar" id="user-avatar">U</div>
             </div>
         </div>
     </nav>
 
-    <main class="editor-container">
-        
-        <section id="studio-controls" class="control-section">
-            <div class="scrollable-content">
-                <div class="toolbar-panel">
-                    <div class="time-display-wrapper">
-                        <div class="time-label">TIME</div>
-                        <div class="time-display" id="time-display">00:00:00</div>
+    <main class="main-workspace">
+        <div id="video-stage" class="video-preview-area hidden">
+            <video id="main-video" playsinline></video>
+            <div class="placeholder-text">Video Preview</div>
+        </div>
+
+        <section id="control-panel" class="control-deck">
+            <div class="deck-content">
+                <div class="top-bar">
+                    <div class="time-readout">
+                        <span class="label">TIME</span>
+                        <span id="time-display">00:00:00</span>
                     </div>
                     
-                    <div class="transport-deck">
-                        <button id="record-btn" class="ctrl-btn record-btn" aria-label="Record">
-                            <div class="rec-dot"></div>
+                    <div class="playback-controls">
+                        <button id="record-btn" class="transport-btn record">
+                            <div class="dot"></div>
                         </button>
-                        <button id="play-btn" class="ctrl-btn play-btn" aria-label="Play">
+                        <button id="play-btn" class="transport-btn play">
                             <span id="play-icon">▶</span>
                         </button>
-                        <button id="stop-btn" class="ctrl-btn stop-btn" aria-label="Stop">
-                            <span class="stop-icon">■</span>
+                        <button id="stop-btn" class="transport-btn stop">
+                            <span>■</span>
                         </button>
-                        <div class="divider"></div>
-                        <button id="delete-btn" class="ctrl-btn delete-btn hidden" aria-label="Delete">
-                            <span class="trash-icon">🗑</span>
+                        <div class="sep"></div>
+                        <button id="delete-btn" class="transport-btn delete hidden">
+                            <span>🗑</span>
                         </button>
                     </div>
 
-                    <button id="download-btn" class="export-btn">Export .WAV</button>
+                    <div class="export-group">
+                        <select id="export-format" class="format-select">
+                            <option value="wav">.WAV</option>
+                            <option value="mp3">.MP3</option>
+                            <option value="mp4">.MP4</option>
+                        </select>
+                        <button id="download-btn" class="action-btn">Export</button>
+                    </div>
                 </div>
 
-                <div class="library-panel">
-                    <div class="lib-section">
-                        <label class="panel-label">INSTRUMENTS</label>
-                        <div class="lib-row">
-                            <div class="select-wrapper">
-                                <select id="instrument-select" class="custom-select">
+                <div class="tools-grid">
+                    <div class="tool-column">
+                        <label class="column-label">ADD MEDIA</label>
+                        <div class="input-row">
+                            <div class="dropdown-container">
+                                <select id="instrument-select" class="styled-select">
                                     <option value="drum">Kick Drum</option>
                                     <option value="snare">Trap Snare</option>
                                     <option value="hihat">Hi-Hats</option>
@@ -77,24 +86,28 @@
                                     <option value="lofi">Lo-Fi Beat</option>
                                     <option value="synth">Saw Synth</option>
                                     <option value="techno">Techno Lead</option>
-                                    <option value="strings">Orchestral Strings</option>
+                                    <option value="strings">Strings</option>
                                     <option value="bell">Cowbell</option>
                                 </select>
                             </div>
-                            <button id="add-track-btn" class="add-btn">
-                                <span>+</span> Add to Timeline
+                            <button id="add-track-btn" class="tool-btn">
+                                + Audio
                             </button>
+                            <label for="video-upload" class="tool-btn video-btn">
+                                + Video
+                            </label>
+                            <input type="file" id="video-upload" accept="video/*" class="hidden-input">
                         </div>
                     </div>
 
-                    <div class="lib-section">
-                        <label class="panel-label">MIXER</label>
-                        <div class="mixer-row">
-                            <div class="effect-control">
+                    <div class="tool-column">
+                        <label class="column-label">MIXER</label>
+                        <div class="slider-row">
+                            <div class="slider-wrap">
                                 <label>Speed</label>
                                 <input type="range" id="speed-slider" min="0.5" max="2" step="0.1" value="1">
                             </div>
-                            <div class="effect-control">
+                            <div class="slider-wrap">
                                 <label>Volume</label>
                                 <input type="range" id="vol-slider" min="0" max="2" step="0.1" value="1">
                             </div>
@@ -104,44 +117,43 @@
             </div>
         </section>
 
-        <section class="timeline-workspace">
-            <div class="timeline-area" id="timeline-area">
-                <div class="ruler">
+        <section class="timeline-container">
+            <div class="timeline-scroller" id="timeline-area">
+                <div class="time-ruler">
                     <span>0s</span><span>2s</span><span>4s</span><span>6s</span><span>8s</span><span>10s</span><span>12s</span><span>14s</span>
                 </div>
-                <div class="playhead-container">
-                    <div id="playhead" class="playhead"></div>
+                <div class="playhead-wrapper">
+                    <div id="playhead" class="playhead-line"></div>
                 </div>
-                <div id="tracks-wrapper" class="tracks-wrapper">
-                    <div class="empty-timeline-msg">
+                <div id="tracks-container" class="tracks-layer">
+                    <div class="empty-state">
                         <p>Studio Ready.</p>
-                        <p style="font-size: 0.8rem; opacity: 0.6;">Add instruments or ask AI to start.</p>
+                        <p class="sub-text">Add Video, Audio, or use AI to begin.</p>
                     </div>
                 </div>
             </div>
         </section>
-
     </main>
 
-    <div id="ai-overlay" class="ai-overlay hidden"></div>
-    <div id="ai-chat-widget" class="ai-chat-widget hidden">
-        <div class="chat-header">
-            <div class="chat-title">
-                <span class="sparkle">✨</span> Lumi AI
+    <div id="ai-overlay" class="overlay hidden"></div>
+    <div id="ai-widget" class="floating-widget hidden">
+        <div class="widget-header" id="widget-header">
+            <div class="widget-title">
+                <span class="icon">✨</span> Lumi AI
             </div>
-            <button id="close-chat" class="icon-btn">✕</button>
+            <button id="close-chat" class="close-icon">✕</button>
         </div>
-        <div id="chat-history" class="chat-history">
-            <div class="chat-bubble ai-bubble">
+        <div id="chat-stream" class="chat-body">
+            <div class="msg ai">
                 Hi my name is lumI! What music do you want me to create?
             </div>
         </div>
         
-        <div id="typing-indicator" class="typing-indicator hidden">
+        <div id="typing-dots" class="typing hidden">
             <span></span><span></span><span></span>
         </div>
 
-        <div class="chat-input-wrapper">
+        <div class="input-area">
             <input type="text" id="chat-input" placeholder="e.g. 'Make a full Lo-Fi song'">
             <button id="send-chat" class="send-btn">➤</button>
         </div>
