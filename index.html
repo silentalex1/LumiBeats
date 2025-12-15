@@ -16,6 +16,9 @@
             <div class="logo-text">lumi beats <span class="badge">BETA</span></div>
         </div>
         <div class="nav-right">
+            <button id="mobile-menu-btn" class="nav-btn menu-btn" title="Toggle Studio Controls">
+                =
+            </button>
             <button id="ai-chat-toggle" class="nav-btn ai-btn">
                 <span class="btn-icon">✨</span> <span class="btn-label">AI Studio</span>
             </button>
@@ -28,31 +31,30 @@
 
     <main class="editor-container">
         
-        <section class="toolbar-panel">
-            <div class="time-display-wrapper">
-                <div class="time-label">TIME</div>
-                <div class="time-display" id="time-display">00:00:00</div>
-            </div>
-            
-            <div class="transport-deck">
-                <button id="record-btn" class="ctrl-btn record-btn" aria-label="Record">
-                    <div class="rec-dot"></div>
-                </button>
-                <button id="play-btn" class="ctrl-btn play-btn" aria-label="Play">
-                    <span id="play-icon">▶</span>
-                </button>
-                <button id="stop-btn" class="ctrl-btn stop-btn" aria-label="Stop">
-                    <span class="stop-icon">■</span>
-                </button>
+        <section id="studio-controls" class="control-section">
+            <div class="toolbar-panel">
+                <div class="time-display-wrapper">
+                    <div class="time-label">TIME</div>
+                    <div class="time-display" id="time-display">00:00:00</div>
+                </div>
+                
+                <div class="transport-deck">
+                    <button id="record-btn" class="ctrl-btn record-btn" aria-label="Record">
+                        <div class="rec-dot"></div>
+                    </button>
+                    <button id="play-btn" class="ctrl-btn play-btn" aria-label="Play">
+                        <span id="play-icon">▶</span>
+                    </button>
+                    <button id="stop-btn" class="ctrl-btn stop-btn" aria-label="Stop">
+                        <span class="stop-icon">■</span>
+                    </button>
+                </div>
+
+                <button id="download-btn" class="export-btn">Export .WAV</button>
             </div>
 
-            <button id="download-btn" class="export-btn">Export .WAV</button>
-        </section>
-
-        <section class="timeline-workspace">
-            <div class="library-sidebar">
-                <div class="sidebar-section">
-                    <div class="sidebar-header">Instruments</div>
+            <div class="library-panel">
+                <div class="lib-row">
                     <div class="select-wrapper">
                         <select id="instrument-select" class="custom-select">
                             <option value="drum">Kick Drum</option>
@@ -69,12 +71,11 @@
                         </select>
                     </div>
                     <button id="add-track-btn" class="add-btn">
-                        <span>+</span> Add to Timeline
+                        <span>+</span> Add
                     </button>
                 </div>
 
-                <div class="sidebar-section">
-                    <div class="sidebar-header">Mixer</div>
+                <div class="mixer-row">
                     <div class="effect-control">
                         <label>Speed</label>
                         <input type="range" id="speed-slider" min="0.5" max="2" step="0.1" value="1">
@@ -85,7 +86,9 @@
                     </div>
                 </div>
             </div>
+        </section>
 
+        <section class="timeline-workspace">
             <div class="timeline-area" id="timeline-area">
                 <div class="ruler">
                     <span>0s</span><span>2s</span><span>4s</span><span>6s</span><span>8s</span><span>10s</span><span>12s</span><span>14s</span>
