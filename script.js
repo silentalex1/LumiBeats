@@ -1,210 +1,208 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const overlay = document.getElementById('loading-overlay');
-    const line = document.getElementById('visualizer-line');
-    const visualizerContainer = document.getElementById('visualizer-container');
-    const loadingStatus = document.getElementById('loading-status');
-    const loadingPercent = document.getElementById('loading-percent');
-    const waveFill = document.getElementById('wave-fill');
-    const appContainer = document.getElementById('app-container');
-    const settingsBtn = document.getElementById('settings-btn');
-    const mobileSettingsBtn = document.getElementById('mobile-settings-btn');
-    const settingsModal = document.getElementById('settings-modal');
-    const settingsContent = document.getElementById('settings-content');
-    const saveSettingsBtn = document.getElementById('save-settings-btn');
-    const beatSteps = document.querySelectorAll('.beat-step');
-    const tempoSlider = document.getElementById('tempo-slider');
-    const tempoValue = document.getElementById('tempo-value');
-    const volumeSlider = document.getElementById('volume-slider');
-    const volumeValue = document.getElementById('volume-value');
-    const navButtons = document.querySelectorAll('.nav-btn');
-    const contentSections = document.querySelectorAll('.content-section');
-    const playBeatBtn = document.getElementById('play-beat-btn');
-    const stopBeatBtn = document.getElementById('stop-beat-btn');
-    const pitchSlider = document.getElementById('pitch-slider');
-    const pitchValue = document.getElementById('pitch-value');
-    const reverbSlider = document.getElementById('reverb-slider');
-    const reverbValue = document.getElementById('reverb-value');
+let audioContext;
+let mediaRecorder;
+let audioChunks = [];
+let recordedBuffer = null;
+let sourceNode = null;
+let gainNode = null;
+let isRecording = false;
+let isPlaying = false;
 
-    const TOTAL_PATH = 283;
-    waveFill.style.strokeDashoffset = TOTAL_PATH;
+const loginBtn = document.getElementById('login-btn');
+const userInfo = document.getElementById('user-info');
+const usernameDisplay = document.getElementById('username-display');
+const recordBtn = document.getElementById('record-btn');
+const playBtn = document.getElementById('play-btn');
+const stopBtn = document.getElementById('stop-btn');
+const downloadBtn = document.getElementById('download-btn');
+const trackContainer = document.getElementById('track-container');
+const volumeSlider = document.getElementById('volume-slider');
+const pitchSlider = document.getElementById('pitch-slider');
 
-    const APP_LOADED_EVENT = 'appLoaded';
+const chatToggleBtn = document.getElementById('ai-chat-toggle');
+const chatWindow = document.getElementById('ai-chat-interface');
+const closeChatBtn = document.getElementById('close-chat');
+const chatInput = document.getElementById('chat-input');
+const sendChatBtn = document.getElementById('send-chat-btn');
+const chatHistory = document.getElementById('chat-history');
 
-    const startVisualizer = () => {
-        visualizerContainer.classList.add('opacity-100');
-        line.parentElement.classList.add('animate-line-in');
-        
-        let visualizerInterval = setInterval(() => {
-            const randomScaleY = Math.random() * 8 + 1;
-            const randomHue = Math.random() * 360;
-            const randomColor = `hsl(${randomHue}, 80%, 60%)`;
+function initAudio() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+}
 
-            line.style.height = `${randomScaleY}px`;
-            line.style.backgroundColor = randomColor;
-        }, 50);
+loginBtn.addEventListener('click', async () => {
+    try {
+        const user = await puter.auth.signIn();
+        if (user) {
+            loginBtn.classList.add('hidden');
+            userInfo.classList.remove('hidden');
+            usernameDisplay.innerText = `Hi, ${user.username}`;
+        }
+    } catch (error) {
+        console.error(error);
+    }
+});
 
-        setTimeout(() => {
-            clearInterval(visualizerInterval);
-            line.classList.add('pulse-fade');
-            line.addEventListener('animationend', startLoading, { once: true });
-        }, 3000);
-    };
+puter.auth.getUser().then(user => {
+    if (user) {
+        loginBtn.classList.add('hidden');
+        userInfo.classList.remove('hidden');
+        usernameDisplay.innerText = `Hi, ${user.username}`;
+    }
+});
 
-    const startLoading = () => {
-        visualizerContainer.classList.remove('opacity-100');
-        
-        loadingStatus.classList.add('visible', 'opacity-100');
-        
-        const loadingDuration = 3500;
-        const startTime = Date.now();
+chatToggleBtn.addEventListener('click', () => {
+    chatWindow.classList.remove('hidden');
+});
 
-        const updateLoading = () => {
-            const elapsed = Date.now() - startTime;
-            const progressRatio = Math.min(1, elapsed / loadingDuration);
-            
-            const currentProgress = Math.floor(progressRatio * 100);
-            
-            loadingPercent.textContent = `${currentProgress}%`;
-            
-            const offset = TOTAL_PATH - (progressRatio * TOTAL_PATH);
-            waveFill.style.strokeDashoffset = offset;
+closeChatBtn.addEventListener('click', () => {
+    chatWindow.classList.add('hidden');
+});
 
-            if (progressRatio < 1) {
-                requestAnimationFrame(updateLoading);
-            } else {
-                setTimeout(finishLoading, 500);
-            }
-        };
-        
-        requestAnimationFrame(updateLoading);
-    };
+async function handleChatSend() {
+    const text = chatInput.value.trim();
+    if (!text) return;
 
-    const finishLoading = () => {
-        overlay.classList.add('opacity-0');
-        
-        appContainer.classList.remove('hidden');
-        appContainer.classList.add('opacity-100');
-        
-        document.dispatchEvent(new CustomEvent(APP_LOADED_EVENT));
+    appendMessage(text, 'user-msg');
+    chatInput.value = '';
 
-        overlay.addEventListener('transitionend', () => {
-            overlay.remove();
-        }, { once: true });
-    };
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'message ai-msg';
+    loadingDiv.innerText = '...';
+    chatHistory.appendChild(loadingDiv);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
 
-    const openSettings = () => {
-        settingsModal.classList.remove('hidden');
-        settingsModal.classList.add('flex', 'active');
-        setTimeout(() => {
-            settingsContent.classList.add('opacity-100', 'scale-100');
-        }, 10);
-    };
+    try {
+        const response = await puter.ai.chat(`You are a helpful music production assistant. Keep answers concise. User asks: ${text}`);
+        chatHistory.removeChild(loadingDiv);
+        appendMessage(response, 'ai-msg');
+    } catch (err) {
+        chatHistory.removeChild(loadingDiv);
+        appendMessage("I couldn't reach the server right now.", 'ai-msg');
+    }
+}
 
-    const closeSettings = () => {
-        settingsContent.classList.remove('opacity-100', 'scale-100');
-        setTimeout(() => {
-            settingsModal.classList.add('hidden');
-            settingsModal.classList.remove('flex', 'active');
-        }, 300);
-    };
+function appendMessage(text, className) {
+    const div = document.createElement('div');
+    div.className = `message ${className}`;
+    div.innerText = text;
+    chatHistory.appendChild(div);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+}
 
-    const switchSection = (sectionId) => {
-        contentSections.forEach(section => {
-            if (section.id === sectionId) {
-                section.classList.remove('hidden');
-            } else {
-                section.classList.add('hidden');
-            }
-        });
+sendChatBtn.addEventListener('click', handleChatSend);
+chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleChatSend();
+});
 
-        navButtons.forEach(btn => {
-            if (btn.dataset.section === sectionId.replace('-section', '')) {
-                btn.classList.add('text-indigo-400');
-                btn.classList.remove('text-gray-400');
-            } else {
-                btn.classList.add('text-gray-400');
-                btn.classList.remove('text-indigo-400');
-            }
-        });
+recordBtn.addEventListener('click', async () => {
+    initAudio();
 
-        document.querySelector('header').textContent = sectionId === 'studio-section' ? 'Studio Mixer' : 'Vocal Editor';
-    };
+    if (!isRecording) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
 
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const arrayBuffer = await audioBlob.arrayBuffer();
+                recordedBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                renderTrackUI("Recorded Audio");
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+            recordBtn.innerText = "● Stop";
+            recordBtn.classList.add('recording');
+            playBtn.disabled = true;
+
+        } catch (err) {
+            alert("Microphone access is required to record.");
+        }
+    } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        recordBtn.innerText = "● Rec";
+        recordBtn.classList.remove('recording');
+        playBtn.disabled = false;
+    }
+});
+
+function playSound() {
+    if (!recordedBuffer) return;
+
+    sourceNode = audioContext.createBufferSource();
+    sourceNode.buffer = recordedBuffer;
+
+    gainNode = audioContext.createGain();
     
-    setTimeout(startVisualizer, 500);
+    sourceNode.connect(gainNode);
+    gainNode.connect(audioContext.destination);
 
-    // --- UI Listeners (Connection) ---
+    applySettings();
 
-    // Settings Modal
-    settingsBtn.addEventListener('click', openSettings);
-    mobileSettingsBtn.addEventListener('click', openSettings);
-    settingsModal.addEventListener('click', (e) => {
-        if (e.target === settingsModal) {
-            closeSettings();
-        }
-    });
-    saveSettingsBtn.addEventListener('click', () => {
-        const apiKey = document.getElementById('gemini-api-key').value;
-        localStorage.setItem('geminiApiKey', apiKey);
-        console.log("Settings saved. Key length:", apiKey.length);
-        closeSettings();
-    });
+    sourceNode.start(0);
+    isPlaying = true;
+    
+    sourceNode.onended = () => {
+        isPlaying = false;
+    };
+}
 
-    // Sequencer Interaction
-    beatSteps.forEach(step => {
-        step.addEventListener('click', () => {
-            step.classList.toggle('active');
-            const instrument = step.dataset.instrument;
-            console.log(`Beat step toggled: ${instrument}`);
-            // In a full application, this would trigger an audio request/update
-        });
-    });
+function stopSound() {
+    if (sourceNode && isPlaying) {
+        sourceNode.stop();
+        isPlaying = false;
+    }
+}
 
-    // Transport Controls
-    playBeatBtn.addEventListener('click', () => {
-        playBeatBtn.classList.add('hidden');
-        stopBeatBtn.classList.remove('hidden');
-        console.log("Beat loop started.");
-    });
-    stopBeatBtn.addEventListener('click', () => {
-        stopBeatBtn.classList.add('hidden');
-        playBeatBtn.classList.remove('hidden');
-        console.log("Beat loop stopped.");
-    });
+playBtn.addEventListener('click', () => {
+    initAudio();
+    if(recordedBuffer) {
+        stopSound();
+        playSound();
+    }
+});
 
-    // Slider Connections
-    tempoSlider.addEventListener('input', (e) => {
-        tempoValue.textContent = e.target.value;
-        console.log(`Tempo set to: ${e.target.value} BPM`);
-    });
-    volumeSlider.addEventListener('input', (e) => {
-        volumeValue.textContent = `${e.target.value}%`;
-        console.log(`Master Volume set to: ${e.target.value}%`);
-    });
-    pitchSlider.addEventListener('input', (e) => {
-        pitchValue.textContent = e.target.value;
-        console.log(`Pitch set to: ${e.target.value} semitones`);
-    });
-    reverbSlider.addEventListener('input', (e) => {
-        reverbValue.textContent = `${e.target.value}%`;
-        console.log(`Reverb Mix set to: ${e.target.value}%`);
-    });
+stopBtn.addEventListener('click', stopSound);
 
-    // Navigation Connection
-    navButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            switchSection(`${btn.dataset.section}-section`);
-        });
-    });
+function applySettings() {
+    if (gainNode) gainNode.gain.value = volumeSlider.value;
+    if (sourceNode) sourceNode.playbackRate.value = pitchSlider.value;
+}
 
-    // Gemini Integration Placeholder
-    document.getElementById('generate-beat-btn').addEventListener('click', () => {
-        const apiKey = localStorage.getItem('geminiApiKey');
-        if (!apiKey) {
-            alert('Please enter your Gemini API key in the settings first!');
-            openSettings();
-            return;
-        }
-        console.log("Request sent to Gemini 2.5 Pro for beat generation.");
-    });
+volumeSlider.addEventListener('input', applySettings);
+pitchSlider.addEventListener('input', applySettings);
+
+function renderTrackUI(name) {
+    trackContainer.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'track-item';
+    div.innerHTML = `<span>${name}</span><span>Ready</span>`;
+    trackContainer.appendChild(div);
+}
+
+downloadBtn.addEventListener('click', () => {
+    if (!audioChunks.length) {
+        alert("Please record something first.");
+        return;
+    }
+    const blob = new Blob(audioChunks, { type: 'audio/wav' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    document.body.appendChild(a);
+    a.style = 'display: none';
+    a.href = url;
+    a.download = 'lumi-beat.wav';
+    a.click();
+    window.URL.revokeObjectURL(url);
 });
