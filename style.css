@@ -138,6 +138,10 @@ body {
 .stop-btn { background: #27272a; }
 .stop-btn span { font-size: 1rem; color: var(--text-muted); }
 
+.delete-btn { background: #ef4444; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.delete-btn.visible { opacity: 1; pointer-events: auto; }
+.trash-icon { font-size: 1.1rem; }
+
 .export-btn { background: var(--accent); color: var(--bg-main); border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.9rem; white-space: nowrap; }
 
 .library-panel {
@@ -267,6 +271,10 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 18px; height:
 .audio-clip.synth { background: #6366f1; }
 .audio-clip.strings { background: #16a34a; }
 .audio-clip.bell { background: #b45309; }
+.audio-clip.organ { background: #7c2d12; }
+.audio-clip.marimba { background: #fcd34d; color: black; }
+.audio-clip.brass { background: #fbbf24; color: black; }
+.audio-clip.8bit { background: #10b981; }
 .audio-clip.mic { background: #dc2626; border: 1px dashed white; }
 
 .empty-timeline-msg { text-align: center; color: var(--text-muted); margin-top: 60px; }
