@@ -7,6 +7,7 @@ let audioChunks = [];
 let animationFrame;
 let activeSources = [];
 let isAiReady = false;
+let selectedClipElement = null;
 
 const timelineDuration = 15.0; 
 
@@ -15,6 +16,7 @@ const timeDisplay = document.getElementById('time-display');
 const playhead = document.getElementById('playhead');
 const playBtn = document.getElementById('play-btn');
 const playIcon = document.getElementById('play-icon');
+const deleteBtn = document.getElementById('delete-btn');
 const chatWidget = document.getElementById('ai-chat-widget');
 const chatOverlay = document.getElementById('ai-overlay');
 const chatHistory = document.getElementById('chat-history');
@@ -41,7 +43,6 @@ function generateSound(type) {
     const frameCount = sampleRate * duration;
     const buffer = audioCtx.createBuffer(2, frameCount, sampleRate);
 
-    // Audio Synthesis - Louder and Clearer
     for (let channel = 0; channel < 2; channel++) {
         const data = buffer.getChannelData(channel);
         for (let i = 0; i < frameCount; i++) {
@@ -82,6 +83,15 @@ function generateSound(type) {
                 val = (Math.sin(t * 440 * Math.PI) + Math.sin(t * 880 * Math.PI)) * 0.3;
             } else if (type === 'bell') {
                 val = Math.sin(t * 1200 * Math.PI) * Math.exp(-t * 10) * 0.5;
+            } else if (type === 'organ') {
+                val = (Math.sin(t * 440 * Math.PI) + 0.5 * Math.sin(t * 880 * Math.PI)) * 0.4;
+            } else if (type === 'marimba') {
+                val = Math.sin(t * 500 * Math.PI) * Math.exp(-t * 15) * 0.8;
+            } else if (type === 'brass') {
+                val = ((t * 150 * Math.PI) % 1) * 0.6 * Math.min(1, t*10);
+            } else if (type === '8bit') {
+                val = (Math.sin(t * 220 * Math.PI) > 0 ? 0.5 : -0.5);
+                if (i % 2000 < 1000) val *= 1.5;
             }
 
             data[i] = val;
@@ -90,11 +100,33 @@ function generateSound(type) {
     return buffer;
 }
 
-function selectClip(element) {
-    // Deselect all
+function deselectAll() {
     document.querySelectorAll('.audio-clip').forEach(el => el.classList.remove('selected'));
-    // Select this one
+    selectedClipElement = null;
+    deleteBtn.classList.remove('visible');
+    deleteBtn.classList.add('hidden');
+}
+
+function selectClip(element) {
+    deselectAll();
     element.classList.add('selected');
+    selectedClipElement = element;
+    deleteBtn.classList.remove('hidden');
+    deleteBtn.classList.add('visible');
+}
+
+function deleteSelectedClip() {
+    if (!selectedClipElement) return;
+
+    const trackElement = selectedClipElement.closest('.timeline-track');
+    const trackIndex = Array.from(trackWrapper.children).indexOf(trackElement);
+    
+    if (trackIndex > -1) {
+        trackElement.remove();
+        tracks.splice(trackIndex, 1);
+    }
+    
+    deselectAll();
 }
 
 function makeDraggable(element, trackObj) {
@@ -103,7 +135,7 @@ function makeDraggable(element, trackObj) {
     let initialLeft;
 
     function startDrag(e) {
-        selectClip(element); // Select on drag start
+        selectClip(element);
         isDragging = true;
         startX = (e.touches ? e.touches[0].clientX : e.clientX);
         initialLeft = element.offsetLeft;
@@ -150,7 +182,6 @@ function makeDraggable(element, trackObj) {
     
     window.addEventListener('touchend', endDrag);
     
-    // Simple click handler for selection without drag
     element.addEventListener('click', (e) => {
         e.stopPropagation();
         selectClip(element);
@@ -158,7 +189,7 @@ function makeDraggable(element, trackObj) {
 }
 
 function addTrack(name, type, buffer = null) {
-    initAudio(); // Resume context on user action
+    initAudio();
     const newBuffer = buffer || generateSound(type);
     const trackId = Date.now() + Math.random();
     
@@ -196,7 +227,7 @@ function addTrack(name, type, buffer = null) {
 }
 
 function togglePlay() {
-    initAudio(); // Ensure context is running
+    initAudio();
     if (isPlaying) {
         stopAll();
     } else {
@@ -218,7 +249,6 @@ function playAll() {
 
         const startTimeOffset = track.offsetPercent * timelineDuration;
         
-        // Only play if within timeline bounds
         if (startTimeOffset < timelineDuration) {
             source.start(now + startTimeOffset);
             activeSources.push(source);
@@ -273,6 +303,15 @@ function animatePlayhead(audioStartTime, duration) {
 
 playBtn.addEventListener('click', togglePlay);
 document.getElementById('stop-btn').addEventListener('click', stopAll);
+deleteBtn.addEventListener('click', deleteSelectedClip);
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedClipElement) {
+            deleteSelectedClip();
+        }
+    }
+});
 
 document.getElementById('add-track-btn').addEventListener('click', () => {
     initAudio();
@@ -321,7 +360,6 @@ document.getElementById('download-btn').addEventListener('click', () => {
     alert("Exporting mix to .WAV... (Processing)");
 });
 
-// AI & Login Logic
 document.getElementById('ai-chat-toggle').addEventListener('click', () => {
     chatWidget.classList.remove('hidden');
     if(window.innerWidth < 600) chatOverlay.classList.remove('hidden');
@@ -361,7 +399,7 @@ async function handleAiRequest() {
         const prompt = `User request: "${text}". 
         Act as a music AI. Return single token matching request.
         Genre Tokens: [GENRE:LOFI], [GENRE:TRAP], [GENRE:TECHNO], [GENRE:ORCHESTRA].
-        Instrument Tokens: [ADD:drum], [ADD:snare], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:guitar], [ADD:flute], [ADD:sax], [ADD:harp], [ADD:choir], [ADD:techno], [ADD:synth], [ADD:strings], [ADD:bell].
+        Instrument Tokens: [ADD:drum], [ADD:snare], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:guitar], [ADD:flute], [ADD:sax], [ADD:harp], [ADD:choir], [ADD:techno], [ADD:synth], [ADD:strings], [ADD:bell], [ADD:organ], [ADD:marimba], [ADD:brass], [ADD:8bit].
         Return short text then token.`;
         
         const response = await puter.ai.chat(prompt);
@@ -391,6 +429,10 @@ async function handleAiRequest() {
         else if (response.includes('[ADD:synth]')) actionBtn = createAiBtn('synth', 'Saw Synth');
         else if (response.includes('[ADD:strings]')) actionBtn = createAiBtn('strings', 'Strings');
         else if (response.includes('[ADD:bell]')) actionBtn = createAiBtn('bell', 'Cowbell');
+        else if (response.includes('[ADD:organ]')) actionBtn = createAiBtn('organ', 'Jazz Organ');
+        else if (response.includes('[ADD:marimba]')) actionBtn = createAiBtn('marimba', 'Marimba');
+        else if (response.includes('[ADD:brass]')) actionBtn = createAiBtn('brass', 'Brass Section');
+        else if (response.includes('[ADD:8bit]')) actionBtn = createAiBtn('8bit', '8-Bit Arcade');
 
         appendMessage(displayMsg + actionBtn, true);
         
@@ -462,9 +504,8 @@ if (typeof puter !== 'undefined') {
     }).catch(()=>{});
 }
 
-// Global click to select logic (deselect if clicking empty space)
 document.addEventListener('click', (e) => {
-    if (!e.target.closest('.audio-clip')) {
-        document.querySelectorAll('.audio-clip').forEach(el => el.classList.remove('selected'));
+    if (!e.target.closest('.audio-clip') && !e.target.closest('#delete-btn')) {
+        deselectAll();
     }
 });
