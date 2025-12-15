@@ -18,6 +18,12 @@ const chatWidget = document.getElementById('ai-chat-widget');
 const chatOverlay = document.getElementById('ai-overlay');
 const chatHistory = document.getElementById('chat-history');
 const typingIndicator = document.getElementById('typing-indicator');
+const controlSection = document.getElementById('studio-controls');
+const menuBtn = document.getElementById('mobile-menu-btn');
+
+menuBtn.addEventListener('click', () => {
+    controlSection.classList.toggle('collapsed');
+});
 
 function initAudio() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
