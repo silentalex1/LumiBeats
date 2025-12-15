@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>lumi beats - beta</title>
+    <title>lumi beats</title>
     <meta name="description" content="Make your song come true for free.">
+    <link rel="icon" href="data:image/x-icon;base64,AAABAAEAAQEAAAEAIAAwAAAAFgAAACgAAAABAAAAAgAAAAEAIAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAA==">
     <link rel="stylesheet" href="style.css">
     <script src="https://js.puter.com/v2/"></script>
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo-group">
+        <div class="logo-group" onclick="router.navigate('/')">
             <div class="logo-icon">LB</div>
             <div class="logo-text">lumi beats <span class="badge">BETA</span></div>
         </div>
@@ -26,127 +27,175 @@
         </div>
     </nav>
 
-    <main class="main-workspace">
-        <div id="video-stage" class="video-preview-area hidden">
-            <video id="main-video" playsinline></video>
-            <div class="placeholder-text">Video Preview</div>
-        </div>
+    <!-- VIEW: EDITOR (Main) -->
+    <div id="view-editor" class="view-section active">
+        <main class="main-workspace">
+            <div id="video-stage" class="video-preview-area hidden">
+                <video id="main-video" playsinline></video>
+                <canvas id="video-canvas" class="hidden"></canvas>
+                <div class="placeholder-text">Video Preview</div>
+            </div>
 
-        <section id="control-panel" class="control-deck">
-            <div class="deck-content">
-                <div class="top-bar">
-                    <div class="time-readout">
-                        <span class="label">TIME</span>
-                        <span id="time-display">00:00:00</span>
-                    </div>
-                    
-                    <div class="playback-controls">
-                        <button id="record-btn" class="transport-btn record">
-                            <div class="dot"></div>
-                        </button>
-                        <button id="play-btn" class="transport-btn play">
-                            <span id="play-icon">▶</span>
-                        </button>
-                        <button id="stop-btn" class="transport-btn stop">
-                            <span>■</span>
-                        </button>
-                        <div class="sep"></div>
-                        <button id="split-btn" class="transport-btn split hidden" title="Split Clip (Ctrl+C)">
-                            <span>✂</span>
-                        </button>
-                        <button id="delete-btn" class="transport-btn delete hidden">
-                            <span>🗑</span>
-                        </button>
-                    </div>
-
-                    <div class="export-group">
-                        <div class="quality-selector">
-                            <select id="video-quality" class="format-select">
-                                <option value="480">480p</option>
-                                <option value="1080" selected>1080p</option>
-                                <option value="1440">2K+</option>
-                                <option value="2160">4K+</option>
-                                <option value="4320">8K+</option>
-                            </select>
+            <section id="control-panel" class="control-deck">
+                <div class="deck-content">
+                    <div class="top-bar">
+                        <div class="time-readout">
+                            <span class="label">TIME</span>
+                            <span id="time-display">00:00:00</span>
                         </div>
-                        <select id="export-format" class="format-select">
-                            <option value="wav">.WAV</option>
-                            <option value="mp3">.MP3</option>
-                            <option value="mp4">.MP4</option>
-                            <option value="audio">Audio Only</option>
-                        </select>
-                        <button id="export-trigger-btn" class="action-btn">Export</button>
-                    </div>
-                </div>
+                        
+                        <div class="playback-controls">
+                            <button id="record-btn" class="transport-btn record">
+                                <div class="dot"></div>
+                            </button>
+                            <button id="play-btn" class="transport-btn play">
+                                <span id="play-icon">▶</span>
+                            </button>
+                            <button id="stop-btn" class="transport-btn stop">
+                                <span>■</span>
+                            </button>
+                            <div class="sep"></div>
+                            <button id="split-btn" class="transport-btn split hidden" title="Split (Ctrl+C)">
+                                <span>✂</span>
+                            </button>
+                            <button id="delete-btn" class="transport-btn delete hidden" title="Delete (Del)">
+                                <span>🗑</span>
+                            </button>
+                        </div>
 
-                <div class="tools-grid">
-                    <div class="tool-column media-column">
-                        <label class="column-label">ADD MEDIA</label>
-                        <div class="input-row">
-                            <div class="dropdown-container">
-                                <select id="instrument-select" class="styled-select">
-                                    <option value="drum">Kick Drum</option>
-                                    <option value="snare">Trap Snare</option>
-                                    <option value="hihat">Hi-Hats</option>
-                                    <option value="808">808 Bass</option>
-                                    <option value="piano">Grand Piano</option>
-                                    <option value="guitar">Acoustic Guitar</option>
-                                    <option value="flute">Jazz Flute</option>
-                                    <option value="sax">Saxophone</option>
-                                    <option value="harp">Harp</option>
-                                    <option value="choir">Angelic Choir</option>
-                                    <option value="lofi">Lo-Fi Beat</option>
-                                    <option value="synth">Saw Synth</option>
-                                    <option value="techno">Techno Lead</option>
-                                    <option value="strings">Strings</option>
-                                    <option value="bell">Cowbell</option>
+                        <div class="export-group">
+                            <div class="quality-wrapper">
+                                <span class="quality-label">RES</span>
+                                <select id="video-quality" class="format-select">
+                                    <option value="480">480p</option>
+                                    <option value="1080" selected>1080p</option>
+                                    <option value="1440">2K</option>
+                                    <option value="2160">4K</option>
+                                    <option value="4320">8K</option>
                                 </select>
                             </div>
-                            <button id="add-track-btn" class="tool-btn">
-                                + Audio
-                            </button>
-                            <label for="video-upload" class="tool-btn video-btn">
-                                + Video
-                            </label>
-                            <input type="file" id="video-upload" accept="video/*" class="hidden-input">
+                            <select id="export-format" class="format-select">
+                                <option value="wav">.WAV</option>
+                                <option value="mp3">.MP3</option>
+                                <option value="mp4">.MP4</option>
+                            </select>
+                            <button id="export-trigger-btn" class="action-btn">Export</button>
                         </div>
                     </div>
 
-                    <div class="tool-column mixer-column">
-                        <label class="column-label">MIXER & QUALITY</label>
-                        <div class="slider-row">
-                            <div class="slider-wrap">
-                                <label>Speed</label>
-                                <input type="range" id="speed-slider" min="0.5" max="2" step="0.1" value="1">
+                    <div class="tools-grid">
+                        <div class="tool-column media-column">
+                            <label class="column-label">ADD MEDIA</label>
+                            <div class="input-row">
+                                <div class="dropdown-container">
+                                    <select id="instrument-select" class="styled-select">
+                                        <option value="drum">Kick Drum</option>
+                                        <option value="snare">Trap Snare</option>
+                                        <option value="hihat">Hi-Hats</option>
+                                        <option value="808">808 Bass</option>
+                                        <option value="piano">Grand Piano</option>
+                                        <option value="guitar">Acoustic Guitar</option>
+                                        <option value="flute">Jazz Flute</option>
+                                        <option value="sax">Saxophone</option>
+                                        <option value="trumpet">Trumpet</option>
+                                        <option value="harp">Harp</option>
+                                        <option value="choir">Angelic Choir</option>
+                                        <option value="lofi">Lo-Fi Beat</option>
+                                        <option value="synth">Saw Synth</option>
+                                        <option value="techno">Techno Lead</option>
+                                        <option value="strings">Strings</option>
+                                        <option value="marimba">Marimba</option>
+                                        <option value="8bit">8-Bit</option>
+                                        <option value="bell">Cowbell</option>
+                                    </select>
+                                </div>
+                                <button id="add-track-btn" class="tool-btn">
+                                    + Audio
+                                </button>
+                                <label for="video-upload" class="tool-btn video-btn">
+                                    + Video
+                                </label>
+                                <input type="file" id="video-upload" accept="video/*" class="hidden-input">
                             </div>
-                            <div class="slider-wrap">
-                                <label>Volume</label>
-                                <input type="range" id="vol-slider" min="0" max="2" step="0.1" value="1">
+                        </div>
+
+                        <div class="tool-column mixer-column">
+                            <label class="column-label">MIXER & QUALITY</label>
+                            <div class="slider-row">
+                                <div class="slider-wrap">
+                                    <label>Speed</label>
+                                    <input type="range" id="speed-slider" min="0.5" max="2" step="0.1" value="1">
+                                </div>
+                                <div class="slider-wrap">
+                                    <label>Volume</label>
+                                    <input type="range" id="vol-slider" min="0" max="2" step="0.1" value="1">
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <section class="timeline-container">
-            <div class="timeline-scroller" id="timeline-area">
-                <div class="time-ruler">
-                    <span>0s</span><span>2s</span><span>4s</span><span>6s</span><span>8s</span><span>10s</span><span>12s</span><span>14s</span>
-                </div>
-                <div class="playhead-wrapper">
-                    <div id="playhead" class="playhead-line"></div>
-                </div>
-                <div id="tracks-container" class="tracks-layer">
-                    <div class="empty-state">
-                        <p>Studio Ready.</p>
-                        <p class="sub-text">Add Video, Audio, or use AI to begin.</p>
+            <section class="timeline-container">
+                <div class="timeline-scroller" id="timeline-area">
+                    <div class="time-ruler">
+                        <span>0s</span><span>2s</span><span>4s</span><span>6s</span><span>8s</span><span>10s</span><span>12s</span><span>14s</span>
+                    </div>
+                    <div class="playhead-wrapper">
+                        <div id="playhead" class="playhead-line"></div>
+                    </div>
+                    <div id="tracks-container" class="tracks-layer">
+                        <div class="empty-state">
+                            <p>Studio Ready.</p>
+                            <p class="sub-text">Add Video, Audio, or use AI to begin.</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
-    </main>
+            </section>
+        </main>
+    </div>
 
+    <!-- VIEW: EXPORTING -->
+    <div id="view-exporting" class="view-section hidden">
+        <div class="export-container">
+            <div class="loader-circle"></div>
+            <h2>Rendering Project</h2>
+            <p id="export-status">Processing Audio & Video Layers...</p>
+            <div class="progress-bar">
+                <div class="fill" id="export-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW: PROJECT OPTIONS -->
+    <div id="view-project-option" class="view-section hidden">
+        <div class="modal">
+            <div class="icon-check">✓</div>
+            <h2>Export Complete</h2>
+            <p>Your project has been rendered successfully.</p>
+            <div class="divider"></div>
+            <p class="question">Would you like to save this project to your library?</p>
+            <div class="btn-group">
+                <button id="opt-no-btn" class="btn sec">No, Close</button>
+                <button id="opt-yes-btn" class="btn pri">Yes, Save Project</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW: SAVED PROJECTS -->
+    <div id="view-saved-projects" class="view-section hidden">
+        <div class="projects-layout">
+            <header class="projects-header">
+                <h1>My Projects</h1>
+                <button id="new-project-btn" class="new-btn">+ New Project</button>
+            </header>
+            <div id="project-grid" class="grid">
+                <!-- JS will populate -->
+            </div>
+        </div>
+    </div>
+
+    <!-- AI WIDGET -->
     <div id="ai-overlay" class="overlay hidden"></div>
     <div id="ai-widget" class="floating-widget hidden">
         <div class="widget-header" id="widget-header">
