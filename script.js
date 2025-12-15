@@ -42,22 +42,14 @@ function generateSound(type) {
         for (let i = 0; i < frameCount; i++) {
             const t = i / sampleRate;
             
+            // Algorithms for Real-Time Synthesis (No Files)
             if (type === 'drum') {
                 if (i < 5000) data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 20); 
                 if (i < 15000) data[i] += Math.sin(t * 100 * Math.PI) * Math.exp(-t * 10);
-            } else if (type === 'lofi') {
-                if (i < 6000) data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 15) * 0.8;
-                if (i < 100) data[i] *= 0.5; // Soft attack
-                data[i] = Math.max(-0.6, Math.min(0.6, data[i] * 1.5)); // Clip/Distort
             } else if (type === 'snare') {
                 const noise = Math.random() * 2 - 1;
                 const env = Math.exp(-t * 15);
                 data[i] = noise * env;
-            } else if (type === 'clap') {
-                const noise = Math.random() * 2 - 1;
-                let env = Math.exp(-t * 20);
-                if (i > 1000 && i < 2000) env += 0.5; 
-                data[i] = noise * env * 0.8;
             } else if (type === 'hihat') {
                 if (i % 3000 < 500) data[i] = (Math.random() * 2 - 1) * 0.3;
             } else if (type === '808') {
@@ -73,24 +65,6 @@ function generateSound(type) {
                 const freq = 196; 
                 const osc = (Math.abs((t * freq * 2) % 2 - 1) * 2 - 1); 
                 data[i] = osc * Math.exp(-t * 2) * 0.6;
-            } else if (type === 'electric') {
-                const freq = 196; 
-                const osc = (Math.abs((t * freq * 2) % 2 - 1) * 2 - 1); 
-                data[i] = Math.max(-0.5, Math.min(0.5, osc * 5)) * Math.exp(-t * 1.5); // Distorted
-            } else if (type === 'harp') {
-                const freq = 523; 
-                data[i] = Math.sin(t * freq * 2 * Math.PI) * Math.exp(-t * 4) * 0.4;
-                if (i % 8000 < 4000) data[i] += Math.sin(t * freq * 1.5 * 2 * Math.PI) * 0.1;
-            } else if (type === 'violin') {
-                const freq = 440;
-                const vib = Math.sin(t * 6 * 2 * Math.PI) * 3;
-                const saw = (t * (freq+vib)) % 1 * 2 - 1;
-                data[i] = saw * 0.3 * (t < 0.2 ? t*5 : 1) * Math.exp(-t*0.5);
-            } else if (type === 'sax') {
-                const freq = 261;
-                const square = (Math.sin(t * freq * 2 * Math.PI) > 0 ? 0.5 : -0.5);
-                const saw = (t * freq) % 1 * 2 - 1;
-                data[i] = (square * 0.5 + saw * 0.5) * 0.4;
             } else if (type === 'flute') {
                 const freq = 523; 
                 data[i] = (Math.sin(t * freq * 2 * Math.PI) + 0.1 * Math.sin(t * freq * 2 * 2 * Math.PI)) * 0.4 * Math.min(1, t*10);
@@ -108,6 +82,26 @@ function generateSound(type) {
                 data[i] = s * 0.2 * (t < 0.5 ? t * 2 : Math.exp(-(t-0.5)));
             } else if (type === 'bell') {
                 data[i] = Math.sin(t * 800 * 2 * Math.PI) * Math.exp(-t * 5) * 0.5;
+            } else if (type === 'sax') {
+                 // Sawtooth with slower attack
+                const freq = 261;
+                const osc = (t * freq * 2 * Math.PI) % 1; 
+                const env = Math.min(1, t * 5) * Math.exp(-t);
+                data[i] = (osc - 0.5) * env * 0.5;
+            } else if (type === 'harp') {
+                // Plucked sine
+                const freq = 392; 
+                data[i] = Math.sin(t * freq * 2 * Math.PI) * Math.exp(-t * 8) * 0.6;
+            } else if (type === 'choir') {
+                // Multiple sines
+                const f = 330;
+                data[i] = (Math.sin(t*f*2*Math.PI) + Math.sin(t*f*1.5*2*Math.PI)*0.5) * 0.3 * Math.min(1, t);
+            } else if (type === 'lofi') {
+                // Filtered Noise + Beat
+                const noise = (Math.random() * 2 - 1) * 0.2; // Vinyl crackle
+                let beat = 0;
+                if(i % 16000 < 2000) beat = 0.5; // Slow kick
+                data[i] = (noise + beat) * 0.8; 
             }
         }
     }
@@ -120,6 +114,8 @@ function makeDraggable(element, trackObj) {
     let initialLeft;
 
     function startDrag(e) {
+        // Prevent default only if we are interacting with the clip to avoid blocking scroll elsewhere
+        // But for horizontal drag, we usually want to block vertical scroll on the element
         isDragging = true;
         startX = (e.touches ? e.touches[0].clientX : e.clientX);
         initialLeft = element.offsetLeft;
@@ -155,12 +151,16 @@ function makeDraggable(element, trackObj) {
     window.addEventListener('mouseup', endDrag);
 
     element.addEventListener('touchstart', (e) => {
+        // We only prevent default if we are specifically dragging to stop scroll conflict
+        e.stopPropagation(); 
         startDrag(e);
     }, {passive: false});
     
     window.addEventListener('touchmove', (e) => {
-        if(isDragging) e.preventDefault(); 
-        drag(e);
+        if(isDragging) {
+            e.preventDefault(); 
+            drag(e);
+        }
     }, {passive: false});
     
     window.addEventListener('touchend', endDrag);
@@ -361,33 +361,43 @@ async function handleAiRequest() {
     try {
         if(typeof puter === 'undefined') throw new Error("Puter not loaded");
 
+        // Advanced AI Logic - Supports Multi-Track "Genre" tokens
         const prompt = `User request: "${text}". 
-        Act as Lumi, a music AI. Return a single token for the best instrument.
-        Tokens: [ADD:drum], [ADD:lofi], [ADD:snare], [ADD:clap], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:guitar], [ADD:electric], [ADD:harp], [ADD:violin], [ADD:sax], [ADD:flute], [ADD:techno], [ADD:synth], [ADD:strings], [ADD:bell].
-        Return a friendly short text then the token.`;
+        Act as a music studio AI. 
+        If user wants a genre/vibe, return: [GENRE:LOFI] or [GENRE:TRAP] or [GENRE:TECHNO] or [GENRE:ORCHESTRA].
+        If specific instrument, return: [ADD:drum], [ADD:snare], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:guitar], [ADD:flute], [ADD:sax], [ADD:harp], [ADD:choir], [ADD:techno], [ADD:synth], [ADD:strings], [ADD:bell].
+        Return short text then the token.`;
         
         const response = await puter.ai.chat(prompt);
         
         typingIndicator.classList.add('hidden');
         
-        let displayMsg = response.replace(/\[ADD:\w+\]/g, '').trim();
-        if(!displayMsg) displayMsg = "Here is a suggestion for you.";
+        let displayMsg = response.replace(/\[(ADD|GENRE):\w+\]/g, '').trim();
+        if(!displayMsg) displayMsg = "Here is what I created for you.";
         let actionBtn = '';
         
-        if (response.includes('[ADD:drum]')) actionBtn = createAiBtn('drum', 'Kick Drum');
-        else if (response.includes('[ADD:lofi]')) actionBtn = createAiBtn('lofi', 'Lo-Fi Kick');
+        // Check for Multi-Track Genres
+        if (response.includes('[GENRE:LOFI]')) {
+            actionBtn = createGenreBtn('lofi', 'Full Lo-Fi Beat');
+        } else if (response.includes('[GENRE:TRAP]')) {
+            actionBtn = createGenreBtn('trap', 'Trap Beat Bundle');
+        } else if (response.includes('[GENRE:TECHNO]')) {
+            actionBtn = createGenreBtn('techno_set', 'Techno Set');
+        } else if (response.includes('[GENRE:ORCHESTRA]')) {
+             actionBtn = createGenreBtn('orch', 'Orchestra Set');
+        }
+        // Check for Single Instruments
+        else if (response.includes('[ADD:drum]')) actionBtn = createAiBtn('drum', 'Kick Drum');
         else if (response.includes('[ADD:snare]')) actionBtn = createAiBtn('snare', 'Trap Snare');
-        else if (response.includes('[ADD:clap]')) actionBtn = createAiBtn('clap', 'Studio Clap');
         else if (response.includes('[ADD:hihat]')) actionBtn = createAiBtn('hihat', 'Hi-Hats');
         else if (response.includes('[ADD:808]')) actionBtn = createAiBtn('808', '808 Bass');
         else if (response.includes('[ADD:bass]')) actionBtn = createAiBtn('bass', 'Deep Bass');
         else if (response.includes('[ADD:piano]')) actionBtn = createAiBtn('piano', 'Grand Piano');
         else if (response.includes('[ADD:guitar]')) actionBtn = createAiBtn('guitar', 'Guitar');
-        else if (response.includes('[ADD:electric]')) actionBtn = createAiBtn('electric', 'Electric Guitar');
-        else if (response.includes('[ADD:harp]')) actionBtn = createAiBtn('harp', 'Harp');
-        else if (response.includes('[ADD:violin]')) actionBtn = createAiBtn('violin', 'Violin');
-        else if (response.includes('[ADD:sax]')) actionBtn = createAiBtn('sax', 'Saxophone');
         else if (response.includes('[ADD:flute]')) actionBtn = createAiBtn('flute', 'Jazz Flute');
+        else if (response.includes('[ADD:sax]')) actionBtn = createAiBtn('sax', 'Saxophone');
+        else if (response.includes('[ADD:harp]')) actionBtn = createAiBtn('harp', 'Harp');
+        else if (response.includes('[ADD:choir]')) actionBtn = createAiBtn('choir', 'Choir');
         else if (response.includes('[ADD:techno]')) actionBtn = createAiBtn('techno', 'Techno Lead');
         else if (response.includes('[ADD:synth]')) actionBtn = createAiBtn('synth', 'Saw Synth');
         else if (response.includes('[ADD:strings]')) actionBtn = createAiBtn('strings', 'Strings');
@@ -405,9 +415,34 @@ function createAiBtn(type, name) {
     return `<div class="ai-apply-card"><button class="apply-btn" onclick="applyAi('${type}', '${name}')">✚ Add ${name}</button></div>`;
 }
 
+function createGenreBtn(type, name) {
+    return `<div class="ai-apply-card"><button class="apply-btn" onclick="applyGenre('${type}')">✚ Create ${name}</button></div>`;
+}
+
 window.applyAi = (type, name) => {
     addTrack(name, type);
     appendMessage(`<i>Added ${name} to the timeline.</i>`, true);
+};
+
+window.applyGenre = (genre) => {
+    if(genre === 'lofi') {
+        addTrack('Lo-Fi Drums', 'lofi');
+        setTimeout(() => addTrack('Chill Piano', 'piano'), 100);
+        setTimeout(() => addTrack('Smooth Bass', 'bass'), 200);
+    } else if(genre === 'trap') {
+        addTrack('Hard Kick', 'drum');
+        setTimeout(() => addTrack('Trap Snare', 'snare'), 100);
+        setTimeout(() => addTrack('Hi-Hats', 'hihat'), 200);
+        setTimeout(() => addTrack('808 Sub', '808'), 300);
+    } else if(genre === 'techno_set') {
+        addTrack('Techno Lead', 'techno');
+        setTimeout(() => addTrack('Kick 4/4', 'drum'), 100);
+    } else if(genre === 'orch') {
+        addTrack('Violins', 'strings');
+        setTimeout(() => addTrack('Choir', 'choir'), 100);
+        setTimeout(() => addTrack('Harp Arp', 'harp'), 200);
+    }
+    appendMessage(`<i>Created genre tracks on timeline.</i>`, true);
 };
 
 document.getElementById('send-chat').addEventListener('click', handleAiRequest);
