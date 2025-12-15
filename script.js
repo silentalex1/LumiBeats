@@ -9,6 +9,32 @@ let activeSources = [];
 let selectedTrackId = null;
 let videoObjectUrl = null;
 let timelineDuration = 15.0;
+let exportInterval;
+
+const router = {
+    routes: {
+        '/': 'view-editor',
+        '/exporting': 'view-exporting',
+        '/project-option': 'view-project-option',
+        '/savedprojects': 'view-saved-projects'
+    },
+    navigate: function(path) {
+        window.history.pushState({}, "", path);
+        this.render();
+    },
+    render: function() {
+        const path = window.location.pathname;
+        const viewId = this.routes[path] || 'view-editor';
+        document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+        const activeView = document.getElementById(viewId);
+        if (activeView) activeView.classList.remove('hidden');
+        
+        if (path === '/exporting') startExportProcess();
+        if (path === '/savedprojects') loadSavedProjects();
+    }
+};
+
+window.addEventListener('popstate', () => router.render());
 
 const trackContainer = document.getElementById('tracks-container');
 const timeDisplay = document.getElementById('time-display');
@@ -29,6 +55,8 @@ const userProfile = document.getElementById('user-profile');
 const userAvatar = document.getElementById('user-avatar');
 const videoPlayer = document.getElementById('main-video');
 const videoStage = document.getElementById('video-stage');
+const videoCanvas = document.getElementById('video-canvas');
+const ctx = videoCanvas.getContext('2d');
 
 menuBtn.addEventListener('click', () => {
     controlPanel.classList.toggle('collapsed');
@@ -53,16 +81,14 @@ function generateSound(type) {
             let val = 0;
 
             if (type === 'drum') {
-                const f = 100 * Math.exp(-t * 25);
-                val = Math.sin(t * f * 2 * Math.PI) * Math.exp(-t * 8);
+                val = Math.sin(t * 80 * Math.PI) * Math.exp(-t * 10);
                 if(i < 300) val += (Math.random()-0.5);
             } else if (type === 'snare') {
-                val = (Math.random() - 0.5) * Math.exp(-t * 15) * 0.8;
+                val = (Math.random() - 0.5) * Math.exp(-t * 15);
             } else if (type === 'hihat') {
                 val = (Math.random() - 0.5) * Math.exp(-t * 50) * (i%3 ? 0.8 : 0);
             } else if (type === '808') {
-                const f = 55 * Math.exp(-t * 0.5);
-                val = Math.sin(t * f * 2 * Math.PI) * Math.exp(-t * 1.5);
+                val = Math.sin(t * 50 * Math.PI) * Math.exp(-t * 1.5);
                 val = Math.tanh(val * 4); 
             } else if (type === 'bass') {
                 val = Math.sin(t * 90 * Math.PI) * 0.7 + Math.sin(t * 180 * Math.PI) * 0.3;
@@ -76,6 +102,8 @@ function generateSound(type) {
                 const wave = (Math.abs((t * 180 * 2) % 2 - 1) * 2 - 1);
                 val = wave * Math.exp(-t*0.5) + (Math.random()-0.5)*0.1;
                 val *= 0.5;
+            } else if (type === 'trumpet') {
+                val = Math.max(-0.5, Math.min(0.5, Math.sin(t * 350 * Math.PI) * 2));
             } else if (type === 'harp') {
                 val = Math.sin(t * 500 * Math.PI) * Math.exp(-t * 8) * 0.5;
             } else if (type === 'choir') {
@@ -90,6 +118,10 @@ function generateSound(type) {
                 val = (Math.sin(t * 440 * Math.PI) + Math.sin(t * 442 * Math.PI)) * 0.3;
             } else if (type === 'bell') {
                 val = Math.sin(t * 1200 * Math.PI) * Math.exp(-t * 12) * 0.5;
+            } else if (type === 'marimba') {
+                val = Math.sin(t * 400 * 2 * Math.PI) * Math.exp(-t * 20);
+            } else if (type === '8bit') {
+                val = Math.round(Math.sin(t * 440 * Math.PI)) * 0.3;
             }
             data[i] = val;
         }
@@ -153,7 +185,6 @@ function deleteSelectedTrack() {
         }
         tracks = tracks.filter(t => Math.floor(t.id) !== Math.floor(selectedTrackId));
         deselectAll();
-        
         if (tracks.length === 0) {
             videoPlayer.src = "";
             videoStage.classList.add('hidden');
@@ -469,8 +500,68 @@ document.getElementById('speed-slider').addEventListener('input', (e) => {
 
 document.getElementById('export-trigger-btn').addEventListener('click', () => {
     if(tracks.length === 0) return alert("Project is empty.");
-    window.location.href = 'exporting.html';
+    
+    // Resize video logic for export simulation
+    const quality = document.getElementById('video-quality').value;
+    const height = parseInt(quality);
+    const width = Math.round(height * (16/9));
+    
+    videoCanvas.width = width;
+    videoCanvas.height = height;
+    
+    router.navigate('/exporting');
 });
+
+function startExportProcess() {
+    const fill = document.getElementById('export-fill');
+    let progress = 0;
+    exportInterval = setInterval(() => {
+        progress += Math.random() * 2;
+        if(progress >= 100) {
+            progress = 100;
+            clearInterval(exportInterval);
+            setTimeout(() => router.navigate('/project-option'), 500);
+        }
+        fill.style.width = progress + '%';
+    }, 50);
+}
+
+document.getElementById('opt-yes-btn').addEventListener('click', () => {
+    const format = document.getElementById('export-format').value;
+    const newProjectHtml = `
+    <div class="project-card" onclick="router.navigate('/')">
+        <div class="card-prev">LUMI</div>
+        <div class="card-info">
+            <h3>New Beat Project</h3>
+            <span>${format.toUpperCase()} • Just Now</span>
+        </div>
+    </div>`;
+    const grid = document.getElementById('project-grid');
+    grid.innerHTML = newProjectHtml + grid.innerHTML;
+    router.navigate('/savedprojects');
+});
+
+document.getElementById('opt-no-btn').addEventListener('click', () => {
+    router.navigate('/');
+});
+
+document.getElementById('new-project-btn').addEventListener('click', () => {
+    router.navigate('/');
+});
+
+function loadSavedProjects() {
+    const grid = document.getElementById('project-grid');
+    if(grid.children.length === 0) {
+        grid.innerHTML = `
+        <div class="project-card" onclick="router.navigate('/')">
+            <div class="card-prev">LOFI</div>
+            <div class="card-info">
+                <h3>Chill Lo-Fi Beat</h3>
+                <span>Yesterday</span>
+            </div>
+        </div>`;
+    }
+}
 
 document.getElementById('ai-chat-toggle').addEventListener('click', () => {
     chatWidget.classList.remove('hidden');
@@ -518,7 +609,12 @@ async function handleAiRequest() {
     typingIndicator.classList.remove('hidden');
     
     try {
-        const prompt = `User request: "${text}". Return single token. Tokens: [GENRE:LOFI], [GENRE:TRAP], [GENRE:TECHNO], [GENRE:ORCHESTRA], [ADD:drum], [ADD:snare], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:guitar], [ADD:flute], [ADD:sax], [ADD:harp], [ADD:choir], [ADD:techno], [ADD:synth], [ADD:strings], [ADD:bell]. Text then token.`;
+        const trackNames = tracks.map(t => t.name).join(', ');
+        const prompt = `User request: "${text}". Current tracks: [${trackNames}].
+        Act as Lumi AI music assistant. Return single token matching request.
+        Genre Tokens: [GENRE:LOFI], [GENRE:TRAP], [GENRE:TECHNO], [GENRE:ORCHESTRA].
+        Instrument Tokens: [ADD:drum], [ADD:snare], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:guitar], [ADD:flute], [ADD:sax], [ADD:trumpet], [ADD:harp], [ADD:choir], [ADD:techno], [ADD:synth], [ADD:strings], [ADD:bell], [ADD:marimba], [ADD:8bit].
+        Text then token.`;
         
         const response = await puter.ai.chat(prompt);
         
@@ -541,12 +637,15 @@ async function handleAiRequest() {
         else if (response.includes('[ADD:guitar]')) actionBtn = createAiBtn('guitar', 'Guitar');
         else if (response.includes('[ADD:flute]')) actionBtn = createAiBtn('flute', 'Jazz Flute');
         else if (response.includes('[ADD:sax]')) actionBtn = createAiBtn('sax', 'Saxophone');
+        else if (response.includes('[ADD:trumpet]')) actionBtn = createAiBtn('trumpet', 'Trumpet');
         else if (response.includes('[ADD:harp]')) actionBtn = createAiBtn('harp', 'Harp');
         else if (response.includes('[ADD:choir]')) actionBtn = createAiBtn('choir', 'Choir');
         else if (response.includes('[ADD:techno]')) actionBtn = createAiBtn('techno', 'Techno Lead');
         else if (response.includes('[ADD:synth]')) actionBtn = createAiBtn('synth', 'Saw Synth');
         else if (response.includes('[ADD:strings]')) actionBtn = createAiBtn('strings', 'Strings');
         else if (response.includes('[ADD:bell]')) actionBtn = createAiBtn('bell', 'Cowbell');
+        else if (response.includes('[ADD:marimba]')) actionBtn = createAiBtn('marimba', 'Marimba');
+        else if (response.includes('[ADD:8bit]')) actionBtn = createAiBtn('8bit', '8-Bit');
 
         appendMessage(displayMsg + actionBtn, true);
         
@@ -616,3 +715,6 @@ loginBtn.addEventListener('click', async () => {
 if (typeof puter !== 'undefined') {
     puter.auth.getUser().then(user => updateProfileUI(user)).catch(()=>{});
 }
+
+// Initial Render
+router.render();
