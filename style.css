@@ -87,15 +87,22 @@ body {
     background: var(--bg-main);
     border-bottom: 1px solid var(--border);
     transition: max-height 0.3s ease, opacity 0.3s ease;
-    overflow: hidden;
-    max-height: 300px;
+    overflow-y: auto; 
+    -webkit-overflow-scrolling: touch;
+    max-height: 350px;
     opacity: 1;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) var(--bg-main);
 }
 
 .control-section.collapsed {
     max-height: 0;
     opacity: 0;
     border-bottom: none;
+}
+
+.scrollable-content {
+    padding-bottom: 10px;
 }
 
 .toolbar-panel {
@@ -227,11 +234,18 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 18px; height:
 .audio-clip:active { cursor: grabbing; transform: scale(1.02); box-shadow: 0 8px 16px rgba(0,0,0,0.5); z-index: 10; }
 
 .audio-clip.drum { background: #db2777; }
+.audio-clip.lofi { background: #831843; }
 .audio-clip.snare { background: #be185d; }
+.audio-clip.clap { background: #9d174d; }
 .audio-clip.hihat { background: #f472b6; color: black; }
 .audio-clip.808 { background: #ea580c; }
+.audio-clip.bass { background: #ca8a04; }
 .audio-clip.piano { background: #0891b2; }
 .audio-clip.guitar { background: #d97706; }
+.audio-clip.electric { background: #b45309; }
+.audio-clip.harp { background: #06b6d4; }
+.audio-clip.violin { background: #713f12; }
+.audio-clip.sax { background: #eab308; color: black; }
 .audio-clip.flute { background: #059669; }
 .audio-clip.techno { background: #7c3aed; border: 2px solid #a78bfa; }
 .audio-clip.synth { background: #6366f1; }
@@ -287,6 +301,7 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 18px; height:
     .menu-btn { display: block; }
     .nav-btn .btn-label { display: none; }
     
+    .control-section { overflow-y: auto; max-height: 40vh; }
     .toolbar-panel { flex-wrap: wrap; height: auto; gap: 15px; justify-content: center; padding: 20px 15px; }
     .time-display-wrapper { order: 1; width: 100%; text-align: center; }
     .transport-deck { order: 2; width: 100%; justify-content: center; padding: 12px 30px; }
