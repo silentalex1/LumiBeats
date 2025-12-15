@@ -7,27 +7,31 @@ let audioChunks = [];
 let animationFrame;
 let activeSources = [];
 let selectedTrackId = null;
+let videoObjectUrl = null;
 
 const timelineDuration = 15.0; 
 
-const trackWrapper = document.getElementById('tracks-wrapper');
+const trackContainer = document.getElementById('tracks-container');
 const timeDisplay = document.getElementById('time-display');
 const playhead = document.getElementById('playhead');
 const playBtn = document.getElementById('play-btn');
 const playIcon = document.getElementById('play-icon');
 const deleteBtn = document.getElementById('delete-btn');
-const chatWidget = document.getElementById('ai-chat-widget');
+const chatWidget = document.getElementById('ai-widget');
+const chatHeader = document.getElementById('widget-header');
 const chatOverlay = document.getElementById('ai-overlay');
-const chatHistory = document.getElementById('chat-history');
-const typingIndicator = document.getElementById('typing-indicator');
-const controlSection = document.getElementById('studio-controls');
+const chatHistory = document.getElementById('chat-stream');
+const typingIndicator = document.getElementById('typing-dots');
+const controlPanel = document.getElementById('control-panel');
 const menuBtn = document.getElementById('mobile-menu-btn');
 const loginBtn = document.getElementById('login-btn');
 const userProfile = document.getElementById('user-profile');
 const userAvatar = document.getElementById('user-avatar');
+const videoPlayer = document.getElementById('main-video');
+const videoStage = document.getElementById('video-stage');
 
 menuBtn.addEventListener('click', () => {
-    controlSection.classList.toggle('collapsed');
+    controlPanel.classList.toggle('collapsed');
 });
 
 function initAudio() {
@@ -49,78 +53,42 @@ function generateSound(type) {
             let val = 0;
 
             if (type === 'drum') {
-                const freq = 100 * Math.exp(-t * 20);
-                val = Math.sin(t * freq * 2 * Math.PI) * Math.exp(-t * 5);
-                if (i < 200) val += (Math.random() - 0.5) * 0.5;
+                const f = 100 * Math.exp(-t * 25);
+                val = Math.sin(t * f * 2 * Math.PI) * Math.exp(-t * 8);
+                if(i < 300) val += (Math.random()-0.5);
             } else if (type === 'snare') {
-                const tone = Math.sin(t * 180 * Math.PI) * Math.exp(-t * 15);
-                const noise = (Math.random() * 2 - 1) * Math.exp(-t * 20);
-                val = (tone * 0.5 + noise * 0.8);
+                val = (Math.random() - 0.5) * Math.exp(-t * 15) * 0.8;
             } else if (type === 'hihat') {
-                 // High pass noise approximation
-                const noise = (Math.random() * 2 - 1);
-                if (i % 2 === 0) val = noise * Math.exp(-t * 40) * 0.6;
+                val = (Math.random() - 0.5) * Math.exp(-t * 50) * (i%3 ? 0.8 : 0);
             } else if (type === '808') {
-                const freq = 60 * Math.exp(-t * 1.5);
-                val = Math.sin(t * freq * 2 * Math.PI) * Math.exp(-t * 0.8);
-                val = Math.tanh(val * 4) * 0.8;
+                const f = 55 * Math.exp(-t * 0.5);
+                val = Math.sin(t * f * 2 * Math.PI) * Math.exp(-t * 1.5);
+                val = Math.tanh(val * 4); 
             } else if (type === 'bass') {
-                // Sawtooth-ish
-                const freq = 80;
-                val = 0;
-                for(let k=1; k<5; k++) val += Math.sin(t * freq * k * 2 * Math.PI) / k;
-                val *= 0.6;
+                val = Math.sin(t * 90 * Math.PI) * 0.7 + Math.sin(t * 180 * Math.PI) * 0.3;
             } else if (type === 'piano') {
-                const freq = 440;
-                val = Math.sin(t * freq * 2 * Math.PI) * Math.exp(-t * 4) 
-                    + 0.5 * Math.sin(t * freq * 2 * 2 * Math.PI) * Math.exp(-t * 5)
-                    + 0.2 * Math.sin(t * freq * 3 * 2 * Math.PI) * Math.exp(-t * 6);
-                val *= 0.6;
+                val = Math.sin(t * 440 * Math.PI) * Math.exp(-t * 3) * 0.5;
             } else if (type === 'guitar') {
-                 // Plucked string algo simple
-                const freq = 220;
-                const p = 1/freq;
-                const harmonics = Math.floor((p * sampleRate)/2);
-                val = 0;
-                for(let k=1; k<8; k++) val += (1/k) * Math.sin(t * freq * k * 2 * Math.PI);
-                val *= Math.exp(-t * 3) * 0.5;
+                val = (Math.abs((t * 220 * 2) % 2 - 1) * 2 - 1) * Math.exp(-t*3) * 0.5;
             } else if (type === 'flute') {
-                const freq = 660;
-                val = Math.sin(t * freq * 2 * Math.PI) + 0.1 * Math.sin(t * freq * 3 * 2 * Math.PI);
-                val *= 0.4 * (1 - Math.exp(-t*20)); 
+                val = Math.sin(t * 660 * Math.PI) * 0.4;
             } else if (type === 'sax') {
-                const freq = 200;
-                val = 0;
-                for(let k=1; k<10; k++) val += (1/k) * Math.sin(t*freq*k*2*Math.PI + Math.sin(t*5));
-                val *= 0.3;
+                val = (Math.sin(t*300*Math.PI) > 0 ? 0.4 : -0.4) * Math.exp(-t);
             } else if (type === 'harp') {
-                const freq = 500;
-                val = Math.sin(t * freq * 2 * Math.PI) * Math.exp(-t * 6) * 0.5;
+                val = Math.sin(t * 500 * Math.PI) * Math.exp(-t * 8) * 0.5;
             } else if (type === 'choir') {
-                const f = 250;
-                val = (Math.sin(t*f*2*Math.PI) + Math.sin(t*f*1.01*2*Math.PI) + Math.sin(t*f*1.5*2*Math.PI))/3;
-                val *= 0.4 * Math.min(1, t*4);
+                val = (Math.sin(t * 300 * Math.PI) + Math.sin(t * 304 * Math.PI)) * 0.3 * Math.min(1,t*2);
             } else if (type === 'lofi') {
-                // Noise + low hum
-                val = (Math.random() - 0.5) * 0.05 + Math.sin(t * 50 * 2 * Math.PI) * 0.1;
-                if (i % 22000 < 1000) val += 0.3 * Math.sin(t * 100);
+                val = (Math.random()-0.5)*0.1 + Math.sin(t*100*Math.PI)*0.2;
             } else if (type === 'techno') {
-                const freq = 120;
-                val = (Math.sin(t * freq * 2 * Math.PI) > 0 ? 0.6 : -0.6);
+                val = (Math.sin(t * 120 * Math.PI) > 0 ? 0.6 : -0.6);
             } else if (type === 'synth') {
-                const freq = 330;
-                val = (Math.random()*0.1 + Math.sin(t * freq * 2 * Math.PI * (1 + 0.01*Math.sin(t*10)))) * 0.5;
+                val = (Math.random()*0.1 + Math.sin(t * 440 * Math.PI * (1 + 0.01*Math.sin(t*5)))) * 0.5;
             } else if (type === 'strings') {
-                const freq = 440;
-                val = 0;
-                for(let k=1; k<6; k++) val += Math.sin(t*freq*k*2*Math.PI)/k;
-                val *= 0.3 * (t < 0.2 ? t/0.2 : 1);
+                val = (Math.sin(t * 440 * Math.PI) + Math.sin(t * 442 * Math.PI)) * 0.3;
             } else if (type === 'bell') {
-                val = Math.sin(t * 1000 * 2 * Math.PI) * Math.exp(-t * 8) 
-                    + Math.sin(t * 2500 * 2 * Math.PI) * Math.exp(-t * 12) * 0.5;
-                val *= 0.4;
+                val = Math.sin(t * 1200 * Math.PI) * Math.exp(-t * 12) * 0.5;
             }
-
             data[i] = val;
         }
     }
@@ -128,84 +96,131 @@ function generateSound(type) {
 }
 
 function selectClip(element, trackId) {
-    document.querySelectorAll('.audio-clip').forEach(el => el.classList.remove('selected'));
-    element.classList.add('selected');
+    document.querySelectorAll('.clip').forEach(el => el.classList.remove('active'));
+    element.classList.add('active');
     selectedTrackId = trackId;
     deleteBtn.classList.remove('hidden');
 }
 
 function deselectAll() {
-    document.querySelectorAll('.audio-clip').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.clip').forEach(el => el.classList.remove('active'));
     selectedTrackId = null;
     deleteBtn.classList.add('hidden');
 }
 
 function deleteSelectedTrack() {
     if (selectedTrackId) {
-        // Remove from UI
         const clipEl = document.getElementById(`clip-${Math.floor(selectedTrackId)}`);
         if (clipEl) {
-            const trackEl = clipEl.closest('.timeline-track');
+            const trackEl = clipEl.closest('.track-block');
             trackEl.remove();
         }
-        // Remove from logic
         tracks = tracks.filter(t => Math.floor(t.id) !== Math.floor(selectedTrackId));
         deselectAll();
+        
+        if (tracks.length === 0) {
+            videoPlayer.src = "";
+            videoStage.classList.add('hidden');
+        }
     }
 }
 
-function makeDraggable(element, trackObj) {
-    let isDragging = false;
+function makeInteractable(element, trackObj) {
+    let mode = 'none'; 
     let startX;
     let initialLeft;
+    let initialWidth;
+    let parentWidth;
 
-    function startDrag(e) {
+    const leftHandle = document.createElement('div');
+    leftHandle.className = 'clip-handle left';
+    element.appendChild(leftHandle);
+
+    const rightHandle = document.createElement('div');
+    rightHandle.className = 'clip-handle right';
+    element.appendChild(rightHandle);
+
+    function startInteraction(e, action) {
+        mode = action;
         selectClip(element, trackObj.id);
-        isDragging = true;
         startX = (e.touches ? e.touches[0].clientX : e.clientX);
         initialLeft = element.offsetLeft;
-        element.style.cursor = 'grabbing';
-    }
-
-    function drag(e) {
-        if (!isDragging) return;
-        const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+        initialWidth = element.offsetWidth;
+        parentWidth = element.parentElement.offsetWidth;
         
-        const parentWidth = element.parentElement.offsetWidth;
+        if (mode === 'move') {
+            element.style.cursor = 'grabbing';
+        }
+        e.stopPropagation();
+    }
+
+    function move(e) {
+        if (mode === 'none') return;
+        const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
         const deltaX = clientX - startX;
-        let newLeft = initialLeft + deltaX;
 
-        if (newLeft < 0) newLeft = 0;
-        if (newLeft > parentWidth - element.offsetWidth) newLeft = parentWidth - element.offsetWidth;
-
-        element.style.left = newLeft + 'px';
-        trackObj.offsetPercent = newLeft / parentWidth;
-    }
-
-    function endDrag() {
-        if (isDragging) {
-            isDragging = false;
-            element.style.cursor = 'grab';
+        if (mode === 'move') {
+            let newLeft = initialLeft + deltaX;
+            if (newLeft < 0) newLeft = 0;
+            if (newLeft + element.offsetWidth > parentWidth) newLeft = parentWidth - element.offsetWidth;
+            
+            element.style.left = newLeft + 'px';
+            trackObj.offsetPercent = newLeft / parentWidth;
+        } 
+        else if (mode === 'resize-right') {
+            let newWidth = initialWidth + deltaX;
+            if (newWidth < 20) newWidth = 20;
+            if (element.offsetLeft + newWidth > parentWidth) newWidth = parentWidth - element.offsetLeft;
+            
+            element.style.width = newWidth + 'px';
+            trackObj.durationPercent = newWidth / parentWidth;
+        }
+        else if (mode === 'resize-left') {
+            let newWidth = initialWidth - deltaX;
+            let newLeft = initialLeft + deltaX;
+            
+            if (newWidth < 20) return;
+            if (newLeft < 0) newLeft = 0;
+            
+            element.style.width = newWidth + 'px';
+            element.style.left = newLeft + 'px';
+            trackObj.offsetPercent = newLeft / parentWidth;
+            trackObj.durationPercent = newWidth / parentWidth;
         }
     }
 
-    element.addEventListener('mousedown', startDrag);
-    window.addEventListener('mousemove', drag);
-    window.addEventListener('mouseup', endDrag);
+    function endInteraction() {
+        if (mode !== 'none') {
+            mode = 'none';
+            element.style.cursor = 'pointer';
+        }
+    }
 
+    rightHandle.addEventListener('mousedown', (e) => startInteraction(e, 'resize-right'));
+    rightHandle.addEventListener('touchstart', (e) => startInteraction(e, 'resize-right'), {passive: false});
+
+    leftHandle.addEventListener('mousedown', (e) => startInteraction(e, 'resize-left'));
+    leftHandle.addEventListener('touchstart', (e) => startInteraction(e, 'resize-left'), {passive: false});
+
+    element.addEventListener('mousedown', (e) => {
+        if(e.target === rightHandle || e.target === leftHandle) return;
+        startInteraction(e, 'move');
+    });
     element.addEventListener('touchstart', (e) => {
-        e.stopPropagation(); 
-        startDrag(e);
+        if(e.target === rightHandle || e.target === leftHandle) return;
+        startInteraction(e, 'move');
     }, {passive: false});
-    
+
+    window.addEventListener('mousemove', move);
     window.addEventListener('touchmove', (e) => {
-        if(isDragging) {
+        if(mode !== 'none') {
             e.preventDefault(); 
-            drag(e);
+            move(e);
         }
     }, {passive: false});
-    
-    window.addEventListener('touchend', endDrag);
+
+    window.addEventListener('mouseup', endInteraction);
+    window.addEventListener('touchend', endInteraction);
     
     element.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -213,58 +228,74 @@ function makeDraggable(element, trackObj) {
     });
 }
 
-function addTrack(name, type, buffer = null) {
+function addTrack(name, type, buffer = null, isVideo = false, src = null) {
     initAudio(); 
-    const newBuffer = buffer || generateSound(type);
+    const newBuffer = buffer || (isVideo ? null : generateSound(type));
     const trackId = Date.now() + Math.random();
-    
+    const defaultDurationPct = 2.0 / timelineDuration;
+
     const trackObj = {
         id: trackId,
         type: type,
         buffer: newBuffer,
         gain: audioCtx.createGain(),
-        offsetPercent: 0 
+        offsetPercent: 0,
+        durationPercent: defaultDurationPct, 
+        isVideo: isVideo,
+        videoSrc: src
     };
     
-    trackObj.gain.connect(audioCtx.destination);
+    if(!isVideo) trackObj.gain.connect(audioCtx.destination);
     tracks.push(trackObj);
 
     const div = document.createElement('div');
-    div.className = 'timeline-track';
+    div.className = 'track-block';
     div.innerHTML = `
-        <div class="track-header">
-            <div class="track-name">${name}</div>
-            <div class="track-type">${type.toUpperCase()}</div>
+        <div class="track-info">
+            <div class="track-title">${name}</div>
+            <div class="track-meta">${type.toUpperCase()}</div>
         </div>
-        <div class="track-lane">
-            <div class="audio-clip ${type}" id="clip-${Math.floor(trackId)}">
+        <div class="track-timeline">
+            <div class="clip ${type}" id="clip-${Math.floor(trackId)}" style="width: ${defaultDurationPct * 100}%">
                 <span>${name}</span>
             </div>
         </div>
     `;
-    trackWrapper.appendChild(div);
+    trackContainer.appendChild(div);
 
-    const clip = div.querySelector(`.audio-clip`);
-    makeDraggable(clip, trackObj);
+    const clip = div.querySelector(`.clip`);
+    makeInteractable(clip, trackObj);
 
-    const emptyMsg = document.querySelector('.empty-timeline-msg');
+    const emptyMsg = document.querySelector('.empty-state');
     if (emptyMsg) emptyMsg.remove();
 }
 
+document.getElementById('video-upload').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        if (videoObjectUrl) URL.revokeObjectURL(videoObjectUrl);
+        videoObjectUrl = URL.createObjectURL(file);
+        videoPlayer.src = videoObjectUrl;
+        videoStage.classList.remove('hidden');
+        addTrack('Video Track', 'video', null, true, videoObjectUrl);
+    }
+});
+
 function togglePlay() {
     initAudio(); 
-    if (isPlaying) {
-        stopAll();
-    } else {
-        playAll();
-    }
+    if (isPlaying) stopAll();
+    else playAll();
 }
 
 function playAll() {
     activeSources = [];
     const now = audioCtx.currentTime;
 
+    if(videoPlayer.src) videoPlayer.play();
+
     tracks.forEach(track => {
+        if(track.isVideo) return;
+
         const source = audioCtx.createBufferSource();
         source.buffer = track.buffer;
         source.connect(track.gain);
@@ -273,9 +304,11 @@ function playAll() {
         source.playbackRate.value = document.getElementById('speed-slider').value;
 
         const startTimeOffset = track.offsetPercent * timelineDuration;
+        const clipDuration = track.durationPercent * timelineDuration;
         
         if (startTimeOffset < timelineDuration) {
-            source.start(now + startTimeOffset);
+            source.loop = true; 
+            source.start(now + startTimeOffset, 0, clipDuration);
             activeSources.push(source);
         }
     });
@@ -292,6 +325,12 @@ function stopAll() {
         try { src.stop(); } catch(e) {}
     });
     activeSources = [];
+    
+    if(videoPlayer.src) {
+        videoPlayer.pause();
+        videoPlayer.currentTime = 0;
+    }
+
     isPlaying = false;
     playIcon.innerText = "▶";
     playBtn.style.backgroundColor = "";
@@ -326,20 +365,52 @@ function animatePlayhead(audioStartTime, duration) {
     step();
 }
 
+if (window.innerWidth > 768) {
+    let isDraggingChat = false;
+    let chatStartX, chatStartY, chatInitX, chatInitY;
+
+    chatHeader.addEventListener('mousedown', (e) => {
+        isDraggingChat = true;
+        chatStartX = e.clientX;
+        chatStartY = e.clientY;
+        const rect = chatWidget.getBoundingClientRect();
+        chatInitX = rect.left;
+        chatInitY = rect.top;
+        chatWidget.style.right = 'auto';
+        chatWidget.style.bottom = 'auto';
+        chatHeader.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDraggingChat) return;
+        const dx = e.clientX - chatStartX;
+        const dy = e.clientY - chatStartY;
+        chatWidget.style.left = `${chatInitX + dx}px`;
+        chatWidget.style.top = `${chatInitY + dy}px`;
+    });
+
+    window.addEventListener('mouseup', () => {
+        isDraggingChat = false;
+        chatHeader.style.cursor = 'move';
+    });
+}
+
 playBtn.addEventListener('click', togglePlay);
 document.getElementById('stop-btn').addEventListener('click', stopAll);
 deleteBtn.addEventListener('click', deleteSelectedTrack);
 
-// Global Keydown for Delete
 document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+        e.preventDefault();
+        togglePlay();
+    }
     if (selectedTrackId && (e.key === 'Delete' || e.key === 'Backspace')) {
         deleteSelectedTrack();
     }
 });
 
-// Deselect when clicking background
 document.addEventListener('click', (e) => {
-    if (!e.target.closest('.audio-clip') && !e.target.closest('#delete-btn')) {
+    if (!e.target.closest('.clip') && !e.target.closest('#delete-btn')) {
         deselectAll();
     }
 });
@@ -369,14 +440,14 @@ document.getElementById('record-btn').addEventListener('click', async () => {
             };
             mediaRecorder.start();
             isRecording = true;
-            btn.classList.add('recording');
+            btn.classList.add('active');
         } catch (e) {
             alert('Mic permission denied.');
         }
     } else {
         mediaRecorder.stop();
         isRecording = false;
-        btn.classList.remove('recording');
+        btn.classList.remove('active');
     }
 });
 
@@ -387,11 +458,16 @@ document.getElementById('speed-slider').addEventListener('input', (e) => {
 });
 
 document.getElementById('download-btn').addEventListener('click', () => {
-    if(tracks.length === 0) return alert("Nothing to export.");
-    alert("Exporting mix to .WAV... (Processing)");
+    const format = document.getElementById('export-format').value;
+    if(tracks.length === 0) return alert("Empty project.");
+    
+    if(format === 'mp4') {
+        alert("Video Project Saved (Server rendering required for full MP4).");
+    } else {
+        alert(`Exporting mix to .${format.toUpperCase()}...`);
+    }
 });
 
-// AI & Login Logic
 document.getElementById('ai-chat-toggle').addEventListener('click', () => {
     chatWidget.classList.remove('hidden');
     if(window.innerWidth < 600) chatOverlay.classList.remove('hidden');
@@ -407,13 +483,28 @@ document.getElementById('ai-overlay').addEventListener('click', () => {
 
 function appendMessage(html, isAi) {
     const div = document.createElement('div');
-    div.className = `chat-bubble ${isAi ? 'ai-bubble' : 'user-bubble'}`;
+    div.className = `msg ${isAi ? 'ai' : 'user'}`;
     div.innerHTML = html;
     chatHistory.appendChild(div);
     chatHistory.scrollTop = chatHistory.scrollHeight;
 }
 
 async function handleAiRequest() {
+    if (typeof puter === 'undefined' || !puter.auth) {
+        appendMessage("System error: AI service not loaded.", true);
+        return;
+    }
+    
+    if (!puter.auth.isSignedIn()) {
+        try {
+            await puter.auth.signIn();
+            updateProfileUI(await puter.auth.getUser());
+        } catch (e) {
+            appendMessage("Login required for AI.", true);
+            return;
+        }
+    }
+
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
     if(!text) return;
@@ -423,10 +514,6 @@ async function handleAiRequest() {
     typingIndicator.classList.remove('hidden');
     
     try {
-        if(typeof puter !== 'undefined' && puter.auth && !puter.auth.isSignedIn()) {
-             await puter.auth.signIn();
-        }
-
         const prompt = `User request: "${text}". 
         Act as a music AI. Return single token matching request.
         Genre Tokens: [GENRE:LOFI], [GENRE:TRAP], [GENRE:TECHNO], [GENRE:ORCHESTRA].
@@ -465,16 +552,16 @@ async function handleAiRequest() {
         
     } catch (e) {
         typingIndicator.classList.add('hidden');
-        appendMessage("Network error or AI service offline.", true);
+        appendMessage("AI Service Offline (Try refreshing).", true);
     }
 }
 
 function createAiBtn(type, name) {
-    return `<div class="ai-apply-card"><button class="apply-btn" onclick="applyAi('${type}', '${name}')">✚ Add ${name}</button></div>`;
+    return `<div class="ai-card"><button class="ai-btn-action" onclick="applyAi('${type}', '${name}')">✚ Add ${name}</button></div>`;
 }
 
 function createGenreBtn(type, name) {
-    return `<div class="ai-apply-card"><button class="apply-btn" onclick="applyGenre('${type}')">✚ Create ${name}</button></div>`;
+    return `<div class="ai-card"><button class="ai-btn-action" onclick="applyGenre('${type}')">✚ Create ${name}</button></div>`;
 }
 
 window.applyAi = (type, name) => {
@@ -510,22 +597,22 @@ document.getElementById('chat-input').addEventListener('keypress', (e) => {
 });
 
 function updateProfileUI(user) {
-    loginBtn.classList.add('hidden');
-    userProfile.classList.remove('hidden');
-    userAvatar.innerText = user.username[0].toUpperCase();
+    if (user) {
+        loginBtn.classList.add('hidden');
+        userProfile.classList.remove('hidden');
+        userAvatar.innerText = user.username[0].toUpperCase();
+    }
 }
 
 loginBtn.addEventListener('click', async () => {
     if(typeof puter !== 'undefined') {
         try {
             const user = await puter.auth.signIn();
-            if(user) updateProfileUI(user);
+            updateProfileUI(user);
         } catch(e) { }
     }
 });
 
 if (typeof puter !== 'undefined') {
-    puter.auth.getUser().then(user => {
-        if(user) updateProfileUI(user);
-    }).catch(()=>{});
+    puter.auth.getUser().then(user => updateProfileUI(user)).catch(()=>{});
 }
