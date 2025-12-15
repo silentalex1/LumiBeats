@@ -1,5 +1,7 @@
 let audioCtx;
 let tracks = [];
+let savedProjects = [];
+let currentProjectId = null;
 let isPlaying = false;
 let isRecording = false;
 let mediaRecorder;
@@ -10,6 +12,16 @@ let selectedTrackId = null;
 let videoObjectUrl = null;
 let timelineDuration = 15.0;
 let exportInterval;
+let editingProjectId = null;
+
+// Initialize Saved Projects
+const defaultProject = {
+    id: 'lumibeat-00',
+    name: 'Lo-Fi Chill Beat',
+    date: 'Yesterday',
+    type: 'WAV'
+};
+savedProjects.push(defaultProject);
 
 const router = {
     routes: {
@@ -30,12 +42,13 @@ const router = {
         if (activeView) activeView.classList.remove('hidden');
         
         if (path === '/exporting') startExportProcess();
-        if (path === '/savedprojects') loadSavedProjects();
+        if (path === '/savedprojects') renderSavedProjects();
     }
 };
 
 window.addEventListener('popstate', () => router.render());
 
+// DOM Elements
 const trackContainer = document.getElementById('tracks-container');
 const timeDisplay = document.getElementById('time-display');
 const playhead = document.getElementById('playhead');
@@ -57,9 +70,35 @@ const videoPlayer = document.getElementById('main-video');
 const videoStage = document.getElementById('video-stage');
 const videoCanvas = document.getElementById('video-canvas');
 const ctx = videoCanvas.getContext('2d');
+const renameModal = document.getElementById('rename-modal');
+const mobileDeleteModal = document.getElementById('mobile-delete-modal');
 
 menuBtn.addEventListener('click', () => {
     controlPanel.classList.toggle('collapsed');
+});
+
+document.getElementById('nav-projects-btn').addEventListener('click', () => router.navigate('/savedprojects'));
+document.getElementById('nav-logo').addEventListener('click', () => router.navigate('/savedprojects'));
+
+document.getElementById('mobile-del-btn').addEventListener('click', () => {
+    const select = document.getElementById('mobile-delete-select');
+    select.innerHTML = '';
+    savedProjects.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.innerText = p.name;
+        select.appendChild(opt);
+    });
+    if(savedProjects.length > 0) mobileDeleteModal.classList.remove('hidden');
+    else alert("No projects to delete.");
+});
+
+document.getElementById('cancel-mobile-del').addEventListener('click', () => mobileDeleteModal.classList.add('hidden'));
+document.getElementById('confirm-mobile-del').addEventListener('click', () => {
+    const id = document.getElementById('mobile-delete-select').value;
+    deleteProject(id);
+    mobileDeleteModal.classList.add('hidden');
+    if(window.location.pathname === '/savedprojects') renderSavedProjects();
 });
 
 function initAudio() {
@@ -99,9 +138,7 @@ function generateSound(type) {
             } else if (type === 'flute') {
                 val = Math.sin(t * 660 * Math.PI) * 0.4;
             } else if (type === 'sax') {
-                const wave = (Math.abs((t * 180 * 2) % 2 - 1) * 2 - 1);
-                val = wave * Math.exp(-t*0.5) + (Math.random()-0.5)*0.1;
-                val *= 0.5;
+                val = (Math.sin(t*300*Math.PI) > 0 ? 0.4 : -0.4) * Math.exp(-t);
             } else if (type === 'trumpet') {
                 val = Math.max(-0.5, Math.min(0.5, Math.sin(t * 350 * Math.PI) * 2));
             } else if (type === 'harp') {
@@ -500,15 +537,6 @@ document.getElementById('speed-slider').addEventListener('input', (e) => {
 
 document.getElementById('export-trigger-btn').addEventListener('click', () => {
     if(tracks.length === 0) return alert("Project is empty.");
-    
-    // Resize video logic for export simulation
-    const quality = document.getElementById('video-quality').value;
-    const height = parseInt(quality);
-    const width = Math.round(height * (16/9));
-    
-    videoCanvas.width = width;
-    videoCanvas.height = height;
-    
     router.navigate('/exporting');
 });
 
@@ -527,41 +555,99 @@ function startExportProcess() {
 }
 
 document.getElementById('opt-yes-btn').addEventListener('click', () => {
+    const count = savedProjects.length + 1;
     const format = document.getElementById('export-format').value;
-    const newProjectHtml = `
-    <div class="project-card" onclick="router.navigate('/')">
-        <div class="card-prev">LUMI</div>
-        <div class="card-info">
-            <h3>New Beat Project</h3>
-            <span>${format.toUpperCase()} • Just Now</span>
-        </div>
-    </div>`;
-    const grid = document.getElementById('project-grid');
-    grid.innerHTML = newProjectHtml + grid.innerHTML;
+    const id = 'lumibeat-' + (count < 10 ? '0' + count : count);
+    
+    savedProjects.unshift({
+        id: id,
+        name: `lumibeat-${count < 10 ? '0' + count : count}`,
+        date: 'Just Now',
+        type: format.toUpperCase()
+    });
+    
     router.navigate('/savedprojects');
 });
 
-document.getElementById('opt-no-btn').addEventListener('click', () => {
-    router.navigate('/');
-});
+document.getElementById('opt-no-btn').addEventListener('click', () => router.navigate('/'));
 
 document.getElementById('new-project-btn').addEventListener('click', () => {
+    tracks = [];
+    trackContainer.innerHTML = `<div class="empty-state"><p>Studio Ready.</p><p class="sub-text">Add Video, Audio, or use AI to begin.</p></div>`;
     router.navigate('/');
 });
 
-function loadSavedProjects() {
+function renderSavedProjects() {
     const grid = document.getElementById('project-grid');
-    if(grid.children.length === 0) {
-        grid.innerHTML = `
-        <div class="project-card" onclick="router.navigate('/')">
-            <div class="card-prev">LOFI</div>
+    grid.innerHTML = '';
+    savedProjects.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'project-card';
+        card.innerHTML = `
+            <div class="card-prev">LUMI</div>
             <div class="card-info">
-                <h3>Chill Lo-Fi Beat</h3>
-                <span>Yesterday</span>
+                <h3>${p.name}</h3>
+                <span>${p.type} • ${p.date}</span>
             </div>
-        </div>`;
-    }
+            <button class="card-menu-btn">⋮</button>
+            <div class="menu-dropdown hidden">
+                <button class="menu-item rename">Rename Project</button>
+                <button class="menu-item delete">Delete</button>
+            </div>
+        `;
+        
+        const menuBtn = card.querySelector('.card-menu-btn');
+        const dropdown = card.querySelector('.menu-dropdown');
+        
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.menu-dropdown').forEach(d => d.classList.add('hidden'));
+            dropdown.classList.remove('hidden');
+        });
+        
+        card.querySelector('.rename').addEventListener('click', (e) => {
+            e.stopPropagation();
+            editingProjectId = p.id;
+            document.getElementById('rename-input').value = p.name;
+            renameModal.classList.remove('hidden');
+            dropdown.classList.add('hidden');
+        });
+        
+        card.querySelector('.delete').addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteProject(p.id);
+        });
+        
+        card.addEventListener('click', () => {
+            router.navigate('/');
+        });
+        
+        grid.appendChild(card);
+    });
 }
+
+function deleteProject(id) {
+    savedProjects = savedProjects.filter(p => p.id !== id);
+    renderSavedProjects();
+}
+
+document.getElementById('cancel-rename').addEventListener('click', () => renameModal.classList.add('hidden'));
+document.getElementById('confirm-rename').addEventListener('click', () => {
+    const newName = document.getElementById('rename-input').value;
+    if(newName) {
+        const p = savedProjects.find(p => p.id === editingProjectId);
+        if(p) p.name = newName;
+        renderSavedProjects();
+    }
+    renameModal.classList.add('hidden');
+});
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', (e) => {
+    if(!e.target.closest('.card-menu-btn')) {
+        document.querySelectorAll('.menu-dropdown').forEach(d => d.classList.add('hidden'));
+    }
+});
 
 document.getElementById('ai-chat-toggle').addEventListener('click', () => {
     chatWidget.classList.remove('hidden');
@@ -585,17 +671,18 @@ function appendMessage(html, isAi) {
 }
 
 async function handleAiRequest() {
-    if (typeof puter === 'undefined' || !puter.auth) {
-        appendMessage("System error: AI service not loaded.", true);
+    if (typeof puter === 'undefined') {
+        appendMessage("System error: Puter AI unavailable.", true);
         return;
     }
     
-    if (!puter.auth.isSignedIn()) {
+    // Auth Check
+    if (puter.auth && !puter.auth.isSignedIn()) {
         try {
             await puter.auth.signIn();
             updateProfileUI(await puter.auth.getUser());
         } catch (e) {
-            appendMessage("Login required for AI.", true);
+            appendMessage("Login required for AI features.", true);
             return;
         }
     }
@@ -611,10 +698,9 @@ async function handleAiRequest() {
     try {
         const trackNames = tracks.map(t => t.name).join(', ');
         const prompt = `User request: "${text}". Current tracks: [${trackNames}].
-        Act as Lumi AI music assistant. Return single token matching request.
-        Genre Tokens: [GENRE:LOFI], [GENRE:TRAP], [GENRE:TECHNO], [GENRE:ORCHESTRA].
-        Instrument Tokens: [ADD:drum], [ADD:snare], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:guitar], [ADD:flute], [ADD:sax], [ADD:trumpet], [ADD:harp], [ADD:choir], [ADD:techno], [ADD:synth], [ADD:strings], [ADD:bell], [ADD:marimba], [ADD:8bit].
-        Text then token.`;
+        Act as Lumi AI. Return single token matching request.
+        Tokens: [GENRE:LOFI], [GENRE:TRAP], [GENRE:TECHNO], [GENRE:ORCHESTRA], [ADD:drum], [ADD:snare], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:guitar], [ADD:flute], [ADD:sax], [ADD:trumpet], [ADD:harp], [ADD:choir], [ADD:techno], [ADD:synth], [ADD:strings], [ADD:bell], [ADD:marimba], [ADD:8bit].
+        Return short text then token.`;
         
         const response = await puter.ai.chat(prompt);
         
@@ -651,7 +737,7 @@ async function handleAiRequest() {
         
     } catch (e) {
         typingIndicator.classList.add('hidden');
-        appendMessage("AI Service Offline. Try refreshing.", true);
+        appendMessage("AI currently offline. Please try again in a moment.", true);
     }
 }
 
@@ -716,5 +802,4 @@ if (typeof puter !== 'undefined') {
     puter.auth.getUser().then(user => updateProfileUI(user)).catch(()=>{});
 }
 
-// Initial Render
 router.render();
