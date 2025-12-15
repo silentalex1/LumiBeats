@@ -7,7 +7,7 @@ let audioChunks = [];
 let animationFrame;
 let activeSources = [];
 
-const timelineDuration = 15.0; // Seconds
+const timelineDuration = 15.0; 
 
 const trackWrapper = document.getElementById('tracks-wrapper');
 const timeDisplay = document.getElementById('time-display');
@@ -27,7 +27,7 @@ function initAudio() {
 function generateSound(type) {
     initAudio();
     const sampleRate = audioCtx.sampleRate;
-    const duration = 2.5; 
+    const duration = 3.0; 
     const frameCount = sampleRate * duration;
     const buffer = audioCtx.createBuffer(2, frameCount, sampleRate);
 
@@ -37,8 +37,8 @@ function generateSound(type) {
             const t = i / sampleRate;
             
             if (type === 'drum') {
-                if (i < 5000) data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 20); // Impact
-                if (i < 15000) data[i] += Math.sin(t * 100 * Math.PI) * Math.exp(-t * 10); // Thud
+                if (i < 5000) data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 20); 
+                if (i < 15000) data[i] += Math.sin(t * 100 * Math.PI) * Math.exp(-t * 10);
             } else if (type === 'snare') {
                 const noise = Math.random() * 2 - 1;
                 const env = Math.exp(-t * 15);
@@ -51,9 +51,20 @@ function generateSound(type) {
             } else if (type === 'bass') {
                 data[i] = Math.sin(t * 80 * 2 * Math.PI) * 0.5 + Math.sin(t * 160 * 2 * Math.PI) * 0.2;
             } else if (type === 'piano') {
-                const freq = 330; // E4
+                const freq = 330; 
                 data[i] = Math.sin(t * freq * 2 * Math.PI) * Math.exp(-t * 3) * 0.5;
                 data[i] += Math.sin(t * freq * 2 * 2 * Math.PI) * Math.exp(-t * 4) * 0.2;
+            } else if (type === 'guitar') {
+                const freq = 196; 
+                const osc = (Math.abs((t * freq * 2) % 2 - 1) * 2 - 1); // Triangleish
+                data[i] = osc * Math.exp(-t * 2) * 0.6;
+            } else if (type === 'flute') {
+                const freq = 523; 
+                data[i] = (Math.sin(t * freq * 2 * Math.PI) + 0.1 * Math.sin(t * freq * 2 * 2 * Math.PI)) * 0.4 * Math.min(1, t*10);
+            } else if (type === 'techno') {
+                const freq = 110; 
+                const mod = Math.sin(t * 10);
+                data[i] = ((t * freq * 2 * Math.PI + mod) % 1 > 0.5 ? 0.6 : -0.6); // Squareish
             } else if (type === 'synth') {
                 const freq = 220;
                 data[i] = (Math.random() * 0.05 + Math.sin(t * freq * 2 * Math.PI + Math.sin(t*10))) * 0.4;
@@ -75,20 +86,20 @@ function makeDraggable(element, trackObj) {
     let startX;
     let initialLeft;
 
-    element.addEventListener('mousedown', (e) => {
+    function startDrag(e) {
         isDragging = true;
-        startX = e.clientX;
+        startX = (e.touches ? e.touches[0].clientX : e.clientX);
         initialLeft = element.offsetLeft;
         element.style.cursor = 'grabbing';
         element.style.zIndex = '100';
-    });
+    }
 
-    window.addEventListener('mousemove', (e) => {
+    function drag(e) {
         if (!isDragging) return;
-        e.preventDefault();
+        const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
         
         const parentWidth = element.parentElement.offsetWidth;
-        const deltaX = e.clientX - startX;
+        const deltaX = clientX - startX;
         let newLeft = initialLeft + deltaX;
 
         if (newLeft < 0) newLeft = 0;
@@ -96,15 +107,30 @@ function makeDraggable(element, trackObj) {
 
         element.style.left = newLeft + 'px';
         trackObj.offsetPercent = newLeft / parentWidth;
-    });
+    }
 
-    window.addEventListener('mouseup', () => {
+    function endDrag() {
         if (isDragging) {
             isDragging = false;
             element.style.cursor = 'grab';
             element.style.zIndex = '';
         }
-    });
+    }
+
+    element.addEventListener('mousedown', startDrag);
+    window.addEventListener('mousemove', drag);
+    window.addEventListener('mouseup', endDrag);
+
+    element.addEventListener('touchstart', (e) => {
+        startDrag(e);
+    }, {passive: false});
+    
+    window.addEventListener('touchmove', (e) => {
+        if(isDragging) e.preventDefault(); 
+        drag(e);
+    }, {passive: false});
+    
+    window.addEventListener('touchend', endDrag);
 }
 
 function addTrack(name, type, buffer = null) {
@@ -175,8 +201,9 @@ function playAll() {
     });
 
     isPlaying = true;
-    playIcon.innerText = "■"; // Square for stop
-    playIcon.style.color = "#ef4444";
+    playIcon.innerText = "■"; 
+    playBtn.style.backgroundColor = "white";
+    playIcon.style.color = "black";
     animatePlayhead(now, timelineDuration);
 }
 
@@ -187,6 +214,7 @@ function stopAll() {
     activeSources = [];
     isPlaying = false;
     playIcon.innerText = "▶";
+    playBtn.style.backgroundColor = "";
     playIcon.style.color = "";
     if(animationFrame) cancelAnimationFrame(animationFrame);
     playhead.style.left = '0%';
@@ -264,7 +292,7 @@ document.getElementById('speed-slider').addEventListener('input', (e) => {
 
 document.getElementById('download-btn').addEventListener('click', () => {
     if(tracks.length === 0) return alert("Nothing to export.");
-    alert("Mixing down to WAV... (Check downloads)");
+    alert("Exporting mix to .WAV... (Processing)");
 });
 
 document.getElementById('ai-chat-toggle').addEventListener('click', () => {
@@ -301,45 +329,36 @@ async function handleAiRequest() {
         if(typeof puter === 'undefined') throw new Error("Puter not loaded");
 
         const prompt = `User request: "${text}". 
-        Act as a music studio AI. Analyze the user's request. 
-        If they want a specific sound, output strictly one of these tokens:
-        [ADD:drum], [ADD:snare], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:synth], [ADD:strings], [ADD:bell].
-        If they want a genre, suggest instruments.
-        Output brief text followed by the token.`;
+        Act as a music studio AI. Return a single token for the best instrument matching the description.
+        Tokens: [ADD:drum], [ADD:snare], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:guitar], [ADD:flute], [ADD:techno], [ADD:synth], [ADD:strings], [ADD:bell].
+        Return short text then the token.`;
         
         const response = await puter.ai.chat(prompt);
         
         typingIndicator.classList.add('hidden');
         
         let displayMsg = response.replace(/\[ADD:\w+\]/g, '').trim();
-        if(!displayMsg) displayMsg = "Here is what I created for you.";
+        if(!displayMsg) displayMsg = "Here is a suggestion for you.";
         let actionBtn = '';
         
-        if (response.includes('[ADD:drum]')) {
-            actionBtn = createAiBtn('drum', 'AI Kick Pattern');
-        } else if (response.includes('[ADD:snare]')) {
-            actionBtn = createAiBtn('snare', 'AI Snare');
-        } else if (response.includes('[ADD:hihat]')) {
-            actionBtn = createAiBtn('hihat', 'AI Hi-Hats');
-        } else if (response.includes('[ADD:808]')) {
-            actionBtn = createAiBtn('808', 'AI 808 Bass');
-        } else if (response.includes('[ADD:bass]')) {
-             actionBtn = createAiBtn('bass', 'AI Deep Bass');
-        } else if (response.includes('[ADD:piano]')) {
-             actionBtn = createAiBtn('piano', 'AI Melody');
-        } else if (response.includes('[ADD:synth]')) {
-             actionBtn = createAiBtn('synth', 'AI Synth Lead');
-        } else if (response.includes('[ADD:strings]')) {
-             actionBtn = createAiBtn('strings', 'AI Strings');
-        } else if (response.includes('[ADD:bell]')) {
-             actionBtn = createAiBtn('bell', 'AI Cowbell');
-        }
+        if (response.includes('[ADD:drum]')) actionBtn = createAiBtn('drum', 'Kick Drum');
+        else if (response.includes('[ADD:snare]')) actionBtn = createAiBtn('snare', 'Trap Snare');
+        else if (response.includes('[ADD:hihat]')) actionBtn = createAiBtn('hihat', 'Hi-Hats');
+        else if (response.includes('[ADD:808]')) actionBtn = createAiBtn('808', '808 Bass');
+        else if (response.includes('[ADD:bass]')) actionBtn = createAiBtn('bass', 'Deep Bass');
+        else if (response.includes('[ADD:piano]')) actionBtn = createAiBtn('piano', 'Grand Piano');
+        else if (response.includes('[ADD:guitar]')) actionBtn = createAiBtn('guitar', 'Guitar');
+        else if (response.includes('[ADD:flute]')) actionBtn = createAiBtn('flute', 'Jazz Flute');
+        else if (response.includes('[ADD:techno]')) actionBtn = createAiBtn('techno', 'Techno Lead');
+        else if (response.includes('[ADD:synth]')) actionBtn = createAiBtn('synth', 'Saw Synth');
+        else if (response.includes('[ADD:strings]')) actionBtn = createAiBtn('strings', 'Strings');
+        else if (response.includes('[ADD:bell]')) actionBtn = createAiBtn('bell', 'Cowbell');
 
         appendMessage(displayMsg + actionBtn, true);
         
     } catch (e) {
         typingIndicator.classList.add('hidden');
-        appendMessage("I couldn't connect to the AI brain. Try adding instruments manually from the left sidebar.", true);
+        appendMessage("AI offline. Use the sidebar to add instruments.", true);
     }
 }
 
@@ -366,9 +385,7 @@ document.getElementById('login-btn').addEventListener('click', async () => {
                 document.getElementById('user-profile').classList.remove('hidden');
                 document.getElementById('user-avatar').innerText = user.username[0].toUpperCase();
             }
-        } catch(e) { console.log("Login popup closed"); }
-    } else {
-        alert("Authentication service not ready.");
+        } catch(e) { }
     }
 });
 
