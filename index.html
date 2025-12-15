@@ -9,57 +9,71 @@
     <script src="https://js.puter.com/v2/"></script>
 </head>
 <body>
-
     <nav class="navbar">
-        <div class="logo">lumi beats <span class="badge">beta</span></div>
-        <div class="nav-controls">
-            <button id="ai-chat-toggle" class="btn-nav">Ai Chat</button>
-            <button id="login-btn" class="btn-clean">Login</button>
-            <div id="user-info" class="hidden">
+        <div class="brand">
+            <h1 class="logo">lumi beats</h1>
+            <span class="badge">beta</span>
+        </div>
+        <div class="nav-actions">
+            <button id="ai-chat-toggle" class="btn-secondary">Ai Chat</button>
+            <button id="login-btn" class="btn-primary">Login</button>
+            <div id="user-profile" class="hidden">
                 <span id="username-display"></span>
             </div>
         </div>
     </nav>
 
-    <main class="workspace">
-        <section class="control-bar">
-            <div class="transport">
-                <button id="record-btn" class="transport-btn record">● Rec</button>
-                <button id="play-btn" class="transport-btn">▶ Play</button>
-                <button id="stop-btn" class="transport-btn">■ Stop</button>
-                <button id="download-btn" class="action-btn">Download Song</button>
+    <main class="main-container">
+        <div class="controls-wrapper">
+            <div class="transport-controls">
+                <button id="record-btn" class="ctrl-btn record">
+                    <span class="icon">●</span> Rec
+                </button>
+                <button id="play-btn" class="ctrl-btn play">
+                    <span class="icon">▶</span> Play
+                </button>
+                <button id="stop-btn" class="ctrl-btn stop">
+                    <span class="icon">■</span> Stop
+                </button>
             </div>
-        </section>
+            <button id="download-btn" class="action-btn">Download Song</button>
+        </div>
 
-        <section class="status-area">
-            <h2 id="status-text">Press Record to capture a sound.</h2>
-        </section>
-
-        <section class="properties-panel">
-            <div class="slider-container">
-                <label for="volume-slider">Volume</label>
-                <input type="range" id="volume-slider" min="0" max="2" step="0.1" value="1">
+        <div class="workspace">
+            <div class="track-area">
+                <div id="track-list" class="track-list">
+                    <div class="empty-state">
+                        <p>No beats recorded yet. Press Record to start.</p>
+                    </div>
+                </div>
             </div>
-            <div class="slider-container">
-                <label for="pitch-slider">Pitch / Speed</label>
-                <input type="range" id="pitch-slider" min="0.5" max="2" step="0.1" value="1">
-            </div>
-        </section>
 
-        <section class="visualizer-area" id="track-visual-container">
-            <div class="empty-track"></div>
-        </section>
+            <div class="properties-bar">
+                <div class="slider-group">
+                    <label>Volume</label>
+                    <input type="range" id="volume-slider" min="0" max="2" step="0.1" value="1">
+                </div>
+                <div class="slider-group">
+                    <label>Pitch</label>
+                    <input type="range" id="pitch-slider" min="0.5" max="2" step="0.1" value="1">
+                </div>
+            </div>
+        </div>
     </main>
 
-    <div id="ai-chat-interface" class="chat-window hidden">
+    <div id="ai-chat-widget" class="ai-chat-widget hidden">
         <div class="chat-header">
-            <span>Lumi AI Assistant</span>
-            <button id="close-chat-btn" class="close-btn">×</button>
+            <h3>Lumi AI</h3>
+            <button id="close-chat" class="close-btn">✕</button>
         </div>
-        <div id="chat-history" class="chat-history"></div>
+        <div id="chat-history" class="chat-history">
+            <div class="message ai-message">
+                Thank you for using lumi beats AI. What do you need help with your music beat?
+            </div>
+        </div>
         <div class="chat-input-area">
             <input type="text" id="chat-input" placeholder="Ask about beats...">
-            <button id="send-chat-btn">Send</button>
+            <button id="send-chat" class="send-btn">Send</button>
         </div>
     </div>
 
