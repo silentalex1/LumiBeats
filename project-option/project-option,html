@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Save Project</title>
+    <link rel="stylesheet" href="projectoption.css">
+</head>
+<body>
+    <div class="modal">
+        <div class="icon-check">✓</div>
+        <h2>Export Complete</h2>
+        <p>Your file has been processed successfully.</p>
+        <div class="divider"></div>
+        <p class="question">Would you like to save this project to your library?</p>
+        <div class="btn-group">
+            <button id="no-btn" class="btn sec">No, Close</button>
+            <button id="yes-btn" class="btn pri">Yes, Save Project</button>
+        </div>
+    </div>
+    <script src="projectoption.js"></script>
+</body>
+</html>
