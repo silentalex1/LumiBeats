@@ -49,6 +49,9 @@
                         <button id="stop-btn" class="ctrl-btn stop-btn" aria-label="Stop">
                             <span class="stop-icon">■</span>
                         </button>
+                        <button id="delete-btn" class="ctrl-btn delete-btn hidden" aria-label="Delete">
+                            <span class="trash-icon">🗑</span>
+                        </button>
                     </div>
 
                     <button id="download-btn" class="export-btn">Export .WAV</button>
@@ -69,6 +72,10 @@
                                     <option value="flute">Jazz Flute</option>
                                     <option value="sax">Saxophone</option>
                                     <option value="harp">Harp</option>
+                                    <option value="organ">Jazz Organ</option>
+                                    <option value="marimba">Marimba</option>
+                                    <option value="brass">Brass Section</option>
+                                    <option value="8bit">8-Bit Arcade</option>
                                     <option value="choir">Angelic Choir</option>
                                     <option value="lofi">Lo-Fi Beat</option>
                                     <option value="synth">Saw Synth</option>
@@ -111,7 +118,7 @@
                 <div id="tracks-wrapper" class="tracks-wrapper">
                     <div class="empty-timeline-msg">
                         <p>Studio Ready.</p>
-                        <p style="font-size: 0.8rem; opacity: 0.6;">Add instruments to start.</p>
+                        <p style="font-size: 0.8rem; opacity: 0.6;">Add instruments or ask AI to start.</p>
                     </div>
                 </div>
             </div>
