@@ -8,14 +8,14 @@ let animationFrame;
 let activeSources = [];
 let selectedTrackId = null;
 let videoObjectUrl = null;
-
-const timelineDuration = 15.0; 
+let timelineDuration = 15.0;
 
 const trackContainer = document.getElementById('tracks-container');
 const timeDisplay = document.getElementById('time-display');
 const playhead = document.getElementById('playhead');
 const playBtn = document.getElementById('play-btn');
 const playIcon = document.getElementById('play-icon');
+const splitBtn = document.getElementById('split-btn');
 const deleteBtn = document.getElementById('delete-btn');
 const chatWidget = document.getElementById('ai-widget');
 const chatHeader = document.getElementById('widget-header');
@@ -73,7 +73,9 @@ function generateSound(type) {
             } else if (type === 'flute') {
                 val = Math.sin(t * 660 * Math.PI) * 0.4;
             } else if (type === 'sax') {
-                val = (Math.sin(t*300*Math.PI) > 0 ? 0.4 : -0.4) * Math.exp(-t);
+                const wave = (Math.abs((t * 180 * 2) % 2 - 1) * 2 - 1);
+                val = wave * Math.exp(-t*0.5) + (Math.random()-0.5)*0.1;
+                val *= 0.5;
             } else if (type === 'harp') {
                 val = Math.sin(t * 500 * Math.PI) * Math.exp(-t * 8) * 0.5;
             } else if (type === 'choir') {
@@ -100,12 +102,46 @@ function selectClip(element, trackId) {
     element.classList.add('active');
     selectedTrackId = trackId;
     deleteBtn.classList.remove('hidden');
+    splitBtn.classList.remove('hidden');
 }
 
 function deselectAll() {
     document.querySelectorAll('.clip').forEach(el => el.classList.remove('active'));
     selectedTrackId = null;
     deleteBtn.classList.add('hidden');
+    splitBtn.classList.add('hidden');
+}
+
+function splitSelectedTrack() {
+    if(!selectedTrackId) return;
+    const now = audioCtx.currentTime;
+    const playheadTime = (parseFloat(playhead.style.left) / 100) * timelineDuration || 0;
+    
+    const track = tracks.find(t => Math.floor(t.id) === Math.floor(selectedTrackId));
+    if(!track) return;
+
+    const clipStart = track.offsetPercent * timelineDuration;
+    const clipEnd = clipStart + (track.durationPercent * timelineDuration);
+
+    if(playheadTime > clipStart && playheadTime < clipEnd) {
+        const firstDuration = playheadTime - clipStart;
+        const secondDuration = clipEnd - playheadTime;
+        
+        track.durationPercent = firstDuration / timelineDuration;
+        const el = document.getElementById(`clip-${Math.floor(track.id)}`);
+        if(el) el.style.width = (track.durationPercent * 100) + '%';
+
+        addTrack(track.name, track.type, track.buffer, track.isVideo, track.videoSrc);
+        const newTrack = tracks[tracks.length - 1];
+        newTrack.offsetPercent = playheadTime / timelineDuration;
+        newTrack.durationPercent = secondDuration / timelineDuration;
+        
+        const newEl = document.getElementById(`clip-${Math.floor(newTrack.id)}`);
+        if(newEl) {
+            newEl.style.left = (newTrack.offsetPercent * 100) + '%';
+            newEl.style.width = (newTrack.durationPercent * 100) + '%';
+        }
+    }
 }
 
 function deleteSelectedTrack() {
@@ -147,10 +183,7 @@ function makeInteractable(element, trackObj) {
         initialLeft = element.offsetLeft;
         initialWidth = element.offsetWidth;
         parentWidth = element.parentElement.offsetWidth;
-        
-        if (mode === 'move') {
-            element.style.cursor = 'grabbing';
-        }
+        if (mode === 'move') element.style.cursor = 'grabbing';
         e.stopPropagation();
     }
 
@@ -163,7 +196,6 @@ function makeInteractable(element, trackObj) {
             let newLeft = initialLeft + deltaX;
             if (newLeft < 0) newLeft = 0;
             if (newLeft + element.offsetWidth > parentWidth) newLeft = parentWidth - element.offsetWidth;
-            
             element.style.left = newLeft + 'px';
             trackObj.offsetPercent = newLeft / parentWidth;
         } 
@@ -171,17 +203,14 @@ function makeInteractable(element, trackObj) {
             let newWidth = initialWidth + deltaX;
             if (newWidth < 20) newWidth = 20;
             if (element.offsetLeft + newWidth > parentWidth) newWidth = parentWidth - element.offsetLeft;
-            
             element.style.width = newWidth + 'px';
             trackObj.durationPercent = newWidth / parentWidth;
         }
         else if (mode === 'resize-left') {
             let newWidth = initialWidth - deltaX;
             let newLeft = initialLeft + deltaX;
-            
             if (newWidth < 20) return;
             if (newLeft < 0) newLeft = 0;
-            
             element.style.width = newWidth + 'px';
             element.style.left = newLeft + 'px';
             trackObj.offsetPercent = newLeft / parentWidth;
@@ -198,10 +227,8 @@ function makeInteractable(element, trackObj) {
 
     rightHandle.addEventListener('mousedown', (e) => startInteraction(e, 'resize-right'));
     rightHandle.addEventListener('touchstart', (e) => startInteraction(e, 'resize-right'), {passive: false});
-
     leftHandle.addEventListener('mousedown', (e) => startInteraction(e, 'resize-left'));
     leftHandle.addEventListener('touchstart', (e) => startInteraction(e, 'resize-left'), {passive: false});
-
     element.addEventListener('mousedown', (e) => {
         if(e.target === rightHandle || e.target === leftHandle) return;
         startInteraction(e, 'move');
@@ -210,18 +237,12 @@ function makeInteractable(element, trackObj) {
         if(e.target === rightHandle || e.target === leftHandle) return;
         startInteraction(e, 'move');
     }, {passive: false});
-
     window.addEventListener('mousemove', move);
     window.addEventListener('touchmove', (e) => {
-        if(mode !== 'none') {
-            e.preventDefault(); 
-            move(e);
-        }
+        if(mode !== 'none') { e.preventDefault(); move(e); }
     }, {passive: false});
-
     window.addEventListener('mouseup', endInteraction);
     window.addEventListener('touchend', endInteraction);
-    
     element.addEventListener('click', (e) => {
         e.stopPropagation();
         selectClip(element, trackObj.id);
@@ -236,6 +257,7 @@ function addTrack(name, type, buffer = null, isVideo = false, src = null) {
 
     const trackObj = {
         id: trackId,
+        name: name,
         type: type,
         buffer: newBuffer,
         gain: audioCtx.createGain(),
@@ -345,21 +367,14 @@ function animatePlayhead(audioStartTime, duration) {
         if (!isPlaying) return;
         const now = audioCtx.currentTime;
         const elapsed = now - audioStartTime;
-        
-        if (elapsed > duration) {
-            stopAll();
-            return;
-        }
-
+        if (elapsed > duration) { stopAll(); return; }
         const percent = (elapsed / duration) * 100;
         playhead.style.left = percent + '%';
-
         const totalSec = Math.floor(elapsed);
         const m = Math.floor(totalSec / 60);
         const s = totalSec % 60;
         const ms = Math.floor((elapsed % 1) * 100);
         timeDisplay.innerText = `00:${m<10?'0'+m:m}:${s<10?'0'+s:s}:${ms<10?'0'+ms:ms}`;
-
         animationFrame = requestAnimationFrame(step);
     }
     step();
@@ -368,7 +383,6 @@ function animatePlayhead(audioStartTime, duration) {
 if (window.innerWidth > 768) {
     let isDraggingChat = false;
     let chatStartX, chatStartY, chatInitX, chatInitY;
-
     chatHeader.addEventListener('mousedown', (e) => {
         isDraggingChat = true;
         chatStartX = e.clientX;
@@ -380,15 +394,11 @@ if (window.innerWidth > 768) {
         chatWidget.style.bottom = 'auto';
         chatHeader.style.cursor = 'grabbing';
     });
-
     window.addEventListener('mousemove', (e) => {
         if (!isDraggingChat) return;
-        const dx = e.clientX - chatStartX;
-        const dy = e.clientY - chatStartY;
-        chatWidget.style.left = `${chatInitX + dx}px`;
-        chatWidget.style.top = `${chatInitY + dy}px`;
+        chatWidget.style.left = `${chatInitX + (e.clientX - chatStartX)}px`;
+        chatWidget.style.top = `${chatInitY + (e.clientY - chatStartY)}px`;
     });
-
     window.addEventListener('mouseup', () => {
         isDraggingChat = false;
         chatHeader.style.cursor = 'move';
@@ -398,19 +408,21 @@ if (window.innerWidth > 768) {
 playBtn.addEventListener('click', togglePlay);
 document.getElementById('stop-btn').addEventListener('click', stopAll);
 deleteBtn.addEventListener('click', deleteSelectedTrack);
+splitBtn.addEventListener('click', splitSelectedTrack);
 
 document.addEventListener('keydown', (e) => {
     if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
         e.preventDefault();
         togglePlay();
     }
-    if (selectedTrackId && (e.key === 'Delete' || e.key === 'Backspace')) {
-        deleteSelectedTrack();
+    if (selectedTrackId) {
+        if (e.key === 'Delete' || e.key === 'Backspace') deleteSelectedTrack();
+        if (e.ctrlKey && e.key === 'c') splitSelectedTrack();
     }
 });
 
 document.addEventListener('click', (e) => {
-    if (!e.target.closest('.clip') && !e.target.closest('#delete-btn')) {
+    if (!e.target.closest('.clip') && !e.target.closest('#delete-btn') && !e.target.closest('#split-btn')) {
         deselectAll();
     }
 });
@@ -418,9 +430,7 @@ document.addEventListener('click', (e) => {
 document.getElementById('add-track-btn').addEventListener('click', () => {
     initAudio();
     const select = document.getElementById('instrument-select');
-    const type = select.value;
-    const name = select.options[select.selectedIndex].text;
-    addTrack(name, type);
+    addTrack(select.options[select.selectedIndex].text, select.value);
 });
 
 document.getElementById('record-btn').addEventListener('click', async () => {
@@ -457,15 +467,9 @@ document.getElementById('speed-slider').addEventListener('input', (e) => {
     }
 });
 
-document.getElementById('download-btn').addEventListener('click', () => {
-    const format = document.getElementById('export-format').value;
-    if(tracks.length === 0) return alert("Empty project.");
-    
-    if(format === 'mp4') {
-        alert("Video Project Saved (Server rendering required for full MP4).");
-    } else {
-        alert(`Exporting mix to .${format.toUpperCase()}...`);
-    }
+document.getElementById('export-trigger-btn').addEventListener('click', () => {
+    if(tracks.length === 0) return alert("Project is empty.");
+    window.location.href = 'exporting.html';
 });
 
 document.getElementById('ai-chat-toggle').addEventListener('click', () => {
@@ -514,11 +518,7 @@ async function handleAiRequest() {
     typingIndicator.classList.remove('hidden');
     
     try {
-        const prompt = `User request: "${text}". 
-        Act as a music AI. Return single token matching request.
-        Genre Tokens: [GENRE:LOFI], [GENRE:TRAP], [GENRE:TECHNO], [GENRE:ORCHESTRA].
-        Instrument Tokens: [ADD:drum], [ADD:snare], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:guitar], [ADD:flute], [ADD:sax], [ADD:harp], [ADD:choir], [ADD:techno], [ADD:synth], [ADD:strings], [ADD:bell].
-        Return short text then token.`;
+        const prompt = `User request: "${text}". Return single token. Tokens: [GENRE:LOFI], [GENRE:TRAP], [GENRE:TECHNO], [GENRE:ORCHESTRA], [ADD:drum], [ADD:snare], [ADD:hihat], [ADD:808], [ADD:bass], [ADD:piano], [ADD:guitar], [ADD:flute], [ADD:sax], [ADD:harp], [ADD:choir], [ADD:techno], [ADD:synth], [ADD:strings], [ADD:bell]. Text then token.`;
         
         const response = await puter.ai.chat(prompt);
         
@@ -552,7 +552,7 @@ async function handleAiRequest() {
         
     } catch (e) {
         typingIndicator.classList.add('hidden');
-        appendMessage("AI Service Offline (Try refreshing).", true);
+        appendMessage("AI Service Offline. Try refreshing.", true);
     }
 }
 
