@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VidAI Studio • Professional AI Video Editor</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-[#050505] text-zinc-100 antialiased selection:bg-violet-500/30">
+    <nav class="bg-[#050505]/80 backdrop-blur-xl border-b border-zinc-800/50 px-6 py-3 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-x-6">
+            <div class="flex items-center gap-x-2.5 group cursor-pointer">
+                <div class="w-8 h-8 bg-gradient-to-tr from-violet-600 to-fuchsia-500 rounded-lg flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:scale-105 transition-transform">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-400">VidAI</h1>
+            </div>
+            <div class="hidden md:flex items-center gap-x-6 text-[13px] font-medium text-zinc-400">
+                <a href="#" onclick="showSection('editor')" class="hover:text-white transition-colors">Editor</a>
+                <a href="#" class="hover:text-white transition-colors">Projects</a>
+                <a href="#" class="hover:text-white transition-colors">Assets</a>
+                <a href="#" class="hover:text-white transition-colors">Stock</a>
+            </div>
+        </div>
+        <div class="flex items-center gap-x-3">
+            <button onclick="fakePuterLogin()" class="px-4 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full text-[13px] font-medium flex items-center gap-x-2 hover:bg-zinc-800 transition-all active:scale-95">
+                <img src="https://js.puter.com/favicon.ico" class="w-3.5 h-3.5 opacity-80" alt="">
+                <span>GPT-5 Intelligence</span>
+            </button>
+            <div class="w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center cursor-pointer border border-zinc-700 hover:border-zinc-500 transition-colors">
+                <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+            </div>
+        </div>
+    </nav>
+
+    <div id="upload-screen" class="min-h-[calc(100vh-64px)] flex items-center justify-center p-6">
+        <div onclick="triggerUpload()" class="group relative w-full max-w-2xl aspect-[16/10] bg-zinc-900/30 border border-zinc-800 rounded-3xl flex flex-col items-center justify-center hover:bg-zinc-900/50 hover:border-violet-500/50 transition-all cursor-pointer overflow-hidden">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.05),transparent)] pointer-events-none"></div>
+            <div class="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                <svg class="w-8 h-8 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+            </div>
+            <h2 class="text-3xl font-semibold tracking-tight mb-2">Import Media</h2>
+            <p class="text-zinc-500 mb-8">Drag and drop your video files or browse</p>
+            <div class="flex gap-3">
+                <span class="px-3 py-1 bg-zinc-800 rounded text-[11px] text-zinc-400 border border-zinc-700/50">MP4</span>
+                <span class="px-3 py-1 bg-zinc-800 rounded text-[11px] text-zinc-400 border border-zinc-700/50">MOV</span>
+                <span class="px-3 py-1 bg-zinc-800 rounded text-[11px] text-zinc-400 border border-zinc-700/50">4K Support</span>
+            </div>
+            <input type="file" id="fileInput" accept="video/*" class="hidden" onchange="handleFile(this)">
+        </div>
+    </div>
+
+    <div id="editor-screen" class="hidden h-[calc(100vh-64px)] grid-cols-[260px_1fr_320px]">
+        <aside class="bg-[#080808] border-r border-zinc-800/50 flex flex-col">
+            <div class="p-4 flex items-center justify-between border-b border-zinc-800/30">
+                <h3 class="text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500">Media Library</h3>
+                <button class="text-zinc-500 hover:text-white transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-3 space-y-2">
+                <div onclick="loadDemoVideo()" class="group bg-zinc-900/50 border border-zinc-800/50 hover:border-violet-500/30 rounded-xl p-3 cursor-pointer transition-all">
+                    <div class="w-full aspect-video bg-zinc-800 rounded-lg mb-3 overflow-hidden">
+                        <div class="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-800 animate-pulse"></div>
+                    </div>
+                    <p class="text-xs font-medium truncate text-zinc-300">Summer_Vacation.mp4</p>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-[10px] text-zinc-500">2:14 • 1080p</span>
+                        <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex flex-col bg-[#050505]">
+            <header class="h-14 px-6 border-b border-zinc-800/50 flex items-center justify-between bg-[#080808]">
+                <div class="flex items-center gap-x-4">
+                    <h2 id="video-title" class="text-sm font-medium text-zinc-200">Untitled Project</h2>
+                    <div class="h-4 w-[1px] bg-zinc-800"></div>
+                    <span id="video-duration" class="text-[11px] font-mono text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">00:00 / 00:00</span>
+                </div>
+                <button onclick="exportVideo()" class="bg-violet-600 hover:bg-violet-500 text-white px-5 py-1.5 rounded-full text-[13px] font-semibold transition-all active:scale-95 flex items-center gap-x-2">
+                    <span>Render</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                </button>
+            </header>
+
+            <div class="flex-1 flex flex-col items-center justify-center p-8 bg-zinc-950 relative overflow-hidden">
+                <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.03),transparent)] pointer-events-none"></div>
+                <div class="relative w-full max-w-[90%] aspect-video bg-black rounded-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)] overflow-hidden border border-zinc-800/50 group">
+                    <video id="preview" class="w-full h-full object-contain" controls></video>
+                    <div id="ai-overlay" class="hidden absolute inset-0 bg-violet-600/10 backdrop-blur-[2px] flex items-center justify-center pointer-events-none">
+                        <div class="bg-white text-black px-6 py-2 rounded-full font-bold text-sm tracking-wide shadow-2xl animate-bounce">
+                            AI PROCESS COMPLETE
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="bg-[#080808] border-t border-zinc-800/50 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex gap-4">
+                        <button class="text-zinc-500 hover:text-white transition-colors"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M7 19h10V5H7v14zm-1-2h1V7H6v10z"/></svg></button>
+                        <button class="text-zinc-500 hover:text-white transition-colors"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14h-2v-8h2v8zm4 0h-2v-8h2v8z"/></svg></button>
+                    </div>
+                    <div class="text-[10px] text-zinc-600 font-medium uppercase tracking-widest">Timeline Preview</div>
+                </div>
+                <div id="timeline" class="h-20 bg-zinc-900/50 border border-zinc-800/50 rounded-xl relative cursor-crosshair overflow-hidden group" onclick="scrubTimeline(event)">
+                    <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: repeating-linear-gradient(90deg, #fff 0, #fff 1px, transparent 1px, transparent 40px);"></div>
+                    <div id="playhead" class="absolute top-0 bottom-0 w-0.5 bg-violet-500 z-10 shadow-[0_0_10px_rgba(139,92,246,0.8)]">
+                        <div class="w-3 h-3 bg-violet-500 rounded-full -ml-[5px] -mt-1 shadow-lg"></div>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span class="text-[10px] text-zinc-600 font-medium group-hover:opacity-0 transition-opacity uppercase tracking-tighter">Click to Seek • AI Timeline Active</span>
+                    </div>
+                </div>
+            </footer>
+        </main>
+
+        <aside class="bg-[#080808] border-l border-zinc-800/50 flex flex-col">
+            <nav class="flex border-b border-zinc-800/50">
+                <button onclick="switchTab(0)" id="tab-0" class="flex-1 py-4 text-[11px] font-bold uppercase tracking-widest transition-all border-b border-violet-500 text-white">AI Tools</button>
+                <button onclick="switchTab(1)" id="tab-1" class="flex-1 py-4 text-[11px] font-bold uppercase tracking-widest transition-all text-zinc-500 border-b border-transparent hover:text-zinc-300">Manual</button>
+            </nav>
+
+            <div class="flex-1 overflow-y-auto p-5 custom-scrollbar">
+                <div id="ai-panel" class="space-y-6">
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="runAITool('auto')" class="tool-btn">
+                            <svg class="w-6 h-6 text-violet-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            <span class="text-[11px] font-bold">AUTO-EDIT</span>
+                        </button>
+                        <button onclick="runAITool('captions')" class="tool-btn">
+                            <svg class="w-6 h-6 text-fuchsia-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+                            <span class="text-[11px] font-bold">CAPTIONS</span>
+                        </button>
+                        <button onclick="runAITool('bgremove')" class="tool-btn">
+                            <svg class="w-6 h-6 text-emerald-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
+                            <span class="text-[11px] font-bold">SEGMENT</span>
+                        </button>
+                        <button onclick="runAITool('music')" class="tool-btn">
+                            <svg class="w-6 h-6 text-blue-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+                            <span class="text-[11px] font-bold">SYNC</span>
+                        </button>
+                    </div>
+
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+                        <h4 class="text-[10px] font-bold text-zinc-500 mb-3 uppercase tracking-widest">Natural Language Edit</h4>
+                        <textarea id="ai-prompt" rows="3" class="w-full bg-transparent border-none outline-none resize-none text-[13px] text-zinc-300 placeholder:text-zinc-600" placeholder="e.g. 'Apply a cinematic color grade and add upbeat background music...'"></textarea>
+                        <button onclick="runCustomAI()" class="mt-4 w-full bg-white text-black hover:bg-zinc-200 py-3 rounded-xl font-bold text-[12px] transition-all active:scale-[0.98]">GENERATE WITH GPT-5</button>
+                    </div>
+                </div>
+
+                <div id="manual-panel" class="hidden space-y-6">
+                    <div>
+                        <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Playback Speed</label>
+                        <select onchange="changeSpeed(this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-[13px] outline-none text-zinc-300 appearance-none cursor-pointer">
+                            <option value="0.5">0.5x Slow Motion</option>
+                            <option value="1" selected>1.0x Realtime</option>
+                            <option value="1.5">1.5x Speed Up</option>
+                            <option value="2">2.0x Fast Forward</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Time Range</label>
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <div class="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2">
+                                <span class="text-[9px] text-zinc-600 block">START</span>
+                                <input id="trim-start" type="number" value="0" class="bg-transparent border-none outline-none text-sm w-full font-mono">
+                            </div>
+                            <div class="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2">
+                                <span class="text-[9px] text-zinc-600 block">END</span>
+                                <input id="trim-end" type="number" value="60" class="bg-transparent border-none outline-none text-sm w-full font-mono">
+                            </div>
+                        </div>
+                        <button onclick="applyTrim()" class="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-[12px] font-bold transition-colors">APPLY RANGE</button>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="addTextOverlay()" class="manual-action-btn">
+                            <span>Add Caption Layer</span>
+                            <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        </button>
+                        <button onclick="applyFilter('grayscale')" class="manual-action-btn">
+                            <span>Desaturate</span>
+                            <div class="w-4 h-4 bg-zinc-700 rounded-sm"></div>
+                        </button>
+                        <button onclick="applyFilter('sepia')" class="manual-action-btn">
+                            <span>Warm Filter</span>
+                            <div class="w-4 h-4 bg-orange-900/40 rounded-sm"></div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div id="loading-modal" class="hidden fixed inset-0 bg-[#050505]/95 backdrop-blur-md flex items-center justify-center z-[9999]">
+        <div class="text-center">
+            <div class="relative w-20 h-20 mx-auto mb-8">
+                <div class="absolute inset-0 border-4 border-zinc-800 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-violet-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <h3 id="loading-text" class="text-2xl font-semibold tracking-tight text-white">AI Engine Processing</h3>
+            <p class="text-zinc-500 mt-2 text-sm">Synchronizing with GPT-5 Model v5.2</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
