@@ -1,18 +1,3 @@
-function initTailwind() {
-    tailwind.config = {
-        theme: {
-            extend: {
-                colors: {
-                    violet: {
-                        500: '#8b5cf6',
-                        600: '#7c3aed',
-                    }
-                }
-            }
-        }
-    }
-}
-
 let currentVideoFile = null;
 let videoElement = null;
 
@@ -32,151 +17,103 @@ function loadVideoIntoEditor(file) {
     const editor = document.getElementById('editor-screen');
     editor.classList.remove('hidden');
     editor.classList.add('grid');
-
     videoElement = document.getElementById('preview');
-    const url = URL.createObjectURL(file);
-    videoElement.src = url;
-
+    videoElement.src = URL.createObjectURL(file);
     videoElement.onloadedmetadata = () => {
-        updateDurationDisplay();
         document.getElementById('video-title').textContent = file.name;
+        updateTime();
     };
-
-    videoElement.ontimeupdate = () => {
-        updateDurationDisplay();
-        updatePlayhead();
-    };
+    videoElement.ontimeupdate = updateTime;
 }
 
-function updateDurationDisplay() {
-    const current = formatTime(videoElement.currentTime);
-    const total = formatTime(videoElement.duration);
-    document.getElementById('video-duration').textContent = `${current} / ${total}`;
+function updateTime() {
+    const cur = formatTime(videoElement.currentTime);
+    const dur = formatTime(videoElement.duration);
+    document.getElementById('video-duration').textContent = `${cur} / ${dur}`;
+    const pct = (videoElement.currentTime / videoElement.duration) * 100;
+    document.getElementById('playhead').style.left = `${pct}%`;
 }
 
-function updatePlayhead() {
-    const percent = (videoElement.currentTime / videoElement.duration) * 100;
-    document.getElementById('playhead').style.left = `${percent}%`;
-}
-
-function formatTime(seconds) {
-    if (isNaN(seconds)) return "0:00";
-    const min = Math.floor(seconds / 60);
-    const sec = Math.floor(seconds % 60);
-    return `${min}:${sec < 10 ? '0' : ''}${sec}`;
-}
-
-function loadDemoVideo() {
-    document.getElementById('upload-screen').classList.add('hidden');
-    const editor = document.getElementById('editor-screen');
-    editor.classList.remove('hidden');
-    editor.classList.add('grid');
-
-    videoElement = document.getElementById('preview');
-    videoElement.src = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny_320x180_10s_1MB.mp4';
-    videoElement.onloadedmetadata = () => {
-        updateDurationDisplay();
-        document.getElementById('video-title').textContent = 'Demo: Big Buck Bunny';
-    };
+function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec < 10 ? '0' : ''}${sec}`;
 }
 
 function switchTab(n) {
-    const aiPanel = document.getElementById('ai-panel');
-    const manualPanel = document.getElementById('manual-panel');
-    const t0 = document.getElementById('tab-0');
-    const t1 = document.getElementById('tab-1');
-
-    if (n === 0) {
-        aiPanel.classList.remove('hidden');
-        manualPanel.classList.add('hidden');
-        t0.className = "flex-1 py-4 text-[11px] font-bold uppercase tracking-widest transition-all border-b border-violet-500 text-white";
-        t1.className = "flex-1 py-4 text-[11px] font-bold uppercase tracking-widest transition-all text-zinc-500 border-b border-transparent hover:text-zinc-300";
-    } else {
-        aiPanel.classList.add('hidden');
-        manualPanel.classList.remove('hidden');
-        t1.className = "flex-1 py-4 text-[11px] font-bold uppercase tracking-widest transition-all border-b border-violet-500 text-white";
-        t0.className = "flex-1 py-4 text-[11px] font-bold uppercase tracking-widest transition-all text-zinc-500 border-b border-transparent hover:text-zinc-300";
-    }
-}
-
-function runAITool(tool) {
-    showLoading(`GPT-5 Engine applying ${tool.toUpperCase()}...`);
-    setTimeout(() => {
-        hideLoading();
-        if (videoElement) {
-            triggerSuccessOverlay();
-            if (tool === 'auto') videoElement.playbackRate = 1.15;
-            if (tool === 'bgremove') videoElement.style.filter = 'contrast(1.1) brightness(1.1)';
-        }
-    }, 2000);
+    document.getElementById('ai-panel').classList.toggle('hidden', n !== 0);
+    document.getElementById('manual-panel').classList.toggle('hidden', n !== 1);
+    document.getElementById('tab-0').className = n === 0 ? "flex-1 py-4 text-[10px] font-bold uppercase tracking-widest border-b border-violet-500" : "flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500";
+    document.getElementById('tab-1').className = n === 1 ? "flex-1 py-4 text-[10px] font-bold uppercase tracking-widest border-b border-violet-500" : "flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500";
 }
 
 function runCustomAI() {
-    const prompt = document.getElementById('ai-prompt').value.trim();
+    const prompt = document.getElementById('ai-prompt').value.toLowerCase();
     if (!prompt || !videoElement) return;
-    showLoading('GPT-5 parsing narrative instructions...');
+
+    showLoading();
+
     setTimeout(() => {
         hideLoading();
-        triggerSuccessOverlay();
+        applyAIChanges(prompt);
         document.getElementById('ai-prompt').value = '';
-    }, 2800);
+    }, 3500);
 }
 
-function triggerSuccessOverlay() {
+function applyAIChanges(prompt) {
     const overlay = document.getElementById('ai-overlay');
+    const badge = document.getElementById('quality-badge');
+
+    if (prompt.includes('shake')) {
+        videoElement.classList.add('animate-bounce');
+        setTimeout(() => videoElement.classList.remove('animate-bounce'), 2000);
+    }
+
+    if (prompt.includes('4080') || prompt.includes('4k') || prompt.includes('upscale')) {
+        badge.textContent = '4080P ULTRA HD';
+        badge.classList.replace('text-violet-400', 'text-emerald-400');
+        videoElement.style.filter = 'contrast(1.1) saturate(1.1) brightness(1.05)';
+    }
+
+    if (prompt.includes('2040')) {
+        badge.textContent = '2040P QHD';
+    }
+
+    if (prompt.includes('pretty') || prompt.includes('cinematic') || prompt.includes('make anything')) {
+        videoElement.style.filter = 'sepia(0.2) contrast(1.2) saturate(1.4)';
+    }
+
     overlay.classList.remove('hidden');
-    setTimeout(() => overlay.classList.add('hidden'), 2000);
+    setTimeout(() => overlay.classList.add('hidden'), 2500);
 }
 
-function showLoading(text) {
-    const modal = document.getElementById('loading-modal');
-    document.getElementById('loading-text').textContent = text;
-    modal.classList.remove('hidden');
+function runAITool(type) {
+    document.getElementById('ai-prompt').value = `Applying ${type} effect...`;
+    runCustomAI();
+}
+
+function showLoading() {
+    document.getElementById('loading-modal').classList.remove('hidden');
 }
 
 function hideLoading() {
     document.getElementById('loading-modal').classList.add('hidden');
 }
 
-function changeSpeed(speed) {
-    if (videoElement) videoElement.playbackRate = parseFloat(speed);
+function scrubTimeline(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    videoElement.currentTime = pct * videoElement.duration;
 }
 
-function applyTrim() {
-    if (!videoElement) return;
-    const start = parseFloat(document.getElementById('trim-start').value) || 0;
-    videoElement.currentTime = start;
-}
-
-function applyFilter(type) {
-    if (!videoElement) return;
-    videoElement.style.filter = type === 'grayscale' ? 'grayscale(100%)' : 'sepia(80%) brightness(0.9)';
-    setTimeout(() => { if (videoElement) videoElement.style.filter = '' }, 4000);
-}
-
-function addTextOverlay() {
-    if (!videoElement) return;
-    const text = prompt('Enter text for layer:');
-    if (text) console.log('Layer added:', text);
+function loadDemoVideo() {
+    document.getElementById('upload-screen').classList.add('hidden');
+    document.getElementById('editor-screen').classList.remove('hidden');
+    document.getElementById('editor-screen').classList.add('grid');
+    videoElement = document.getElementById('preview');
+    videoElement.src = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny_320x180_10s_1MB.mp4';
 }
 
 function exportVideo() {
-    if (!videoElement || !videoElement.src) return;
-    const a = document.createElement('a');
-    a.href = videoElement.src;
-    a.download = 'VidAI_Export.mp4';
-    a.click();
+    alert("Exporting project in 4080p...");
 }
-
-function fakePuterLogin() {
-    alert('Connected to Puter. GPT-5 High-Compute mode active.');
-}
-
-function scrubTimeline(e) {
-    if (!videoElement) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
-    videoElement.currentTime = percent * videoElement.duration;
-}
-
-window.onload = initTailwind;
