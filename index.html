@@ -45,6 +45,7 @@
             <h2 class="text-3xl font-semibold tracking-tight mb-2">Import Project Media</h2>
             <p class="text-zinc-500 mb-8">Drop files here to begin AI generation</p>
             <input type="file" id="fileInput" accept="video/*" class="hidden" onchange="handleFile(this)">
+            <button onclick="event.stopPropagation(); loadDemoVideo()" class="px-5 py-2 bg-zinc-800 border border-zinc-700 rounded-full text-[12px] text-zinc-300 hover:border-violet-500 hover:text-violet-400 transition-all">Load Demo Video</button>
         </div>
     </div>
 
@@ -54,8 +55,10 @@
                 <h3 class="text-[11px] font-bold uppercase tracking-widest text-zinc-500">History</h3>
             </div>
             <div id="history-list" class="flex-1 overflow-y-auto p-3 space-y-2">
-                <div onclick="loadDemoVideo()" class="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-3 cursor-pointer">
-                    <div class="w-full aspect-video bg-zinc-800 rounded-lg mb-2"></div>
+                <div onclick="loadDemoVideo()" class="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-3 cursor-pointer hover:border-violet-500/40 transition-all">
+                    <div class="w-full aspect-video bg-zinc-800 rounded-lg mb-2 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
                     <p class="text-[10px] font-medium text-zinc-400">Demo_Source.mp4</p>
                 </div>
             </div>
@@ -68,8 +71,9 @@
                     <span id="video-duration" class="text-[11px] font-mono text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded">00:00 / 00:00</span>
                     <div id="quality-badge" class="text-[9px] font-bold bg-violet-500/10 text-violet-400 px-2 py-0.5 rounded border border-violet-500/20">1080P</div>
                 </div>
-                <button onclick="exportVideo()" class="bg-violet-600 hover:bg-violet-500 text-white px-5 py-1.5 rounded-full text-[13px] font-semibold transition-all">
-                    Export
+                <button onclick="exportVideo()" class="bg-violet-600 hover:bg-violet-500 text-white px-5 py-1.5 rounded-full text-[13px] font-semibold transition-all flex items-center gap-x-2">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    Export & Download
                 </button>
             </header>
 
@@ -82,33 +86,83 @@
                 </div>
             </div>
 
-            <footer class="bg-[#080808] border-t border-zinc-800/50 p-6">
-                <div id="timeline" class="h-16 bg-zinc-900/50 border border-zinc-800 rounded-xl relative cursor-crosshair" onclick="scrubTimeline(event)">
-                    <div id="playhead" class="absolute top-0 bottom-0 w-0.5 bg-violet-500 z-10"></div>
+            <footer class="bg-[#080808] border-t border-zinc-800/50 p-4 space-y-3">
+                <div id="trim-container" class="px-1"></div>
+                <div id="timeline" class="h-10 bg-zinc-900/50 border border-zinc-800 rounded-xl relative cursor-crosshair" onclick="scrubTimeline(event)">
+                    <div id="playhead" class="absolute top-0 bottom-0 w-0.5 bg-violet-500 z-10 pointer-events-none"></div>
                 </div>
             </footer>
         </main>
 
-        <aside class="bg-[#080808] border-l border-zinc-800/50 flex flex-col">
-            <div class="flex border-b border-zinc-800/50">
+        <aside class="bg-[#080808] border-l border-zinc-800/50 flex flex-col overflow-y-auto">
+            <div class="flex border-b border-zinc-800/50 sticky top-0 bg-[#080808] z-10">
                 <button onclick="switchTab(0)" id="tab-0" class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest border-b border-violet-500">AI Studio</button>
                 <button onclick="switchTab(1)" id="tab-1" class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Settings</button>
             </div>
 
             <div class="p-5 flex-1 flex flex-col">
-                <div id="ai-panel" class="space-y-6">
+                <div id="ai-panel" class="space-y-5">
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="runAITool('upscale')" class="tool-btn">UPSCALE</button>
                         <button onclick="runAITool('shake')" class="tool-btn">SHAKE</button>
+                        <button onclick="runAITool('cinematic')" class="tool-btn">CINEMATIC</button>
+                        <button onclick="runAITool('grayscale')" class="tool-btn">B&W</button>
+                        <button onclick="runAITool('warm')" class="tool-btn">WARM</button>
+                        <button onclick="runAITool('flip')" class="tool-btn">FLIP H</button>
+                        <button onclick="runAITool('slow')" class="tool-btn">SLOW MO</button>
+                        <button onclick="runAITool('reset')" class="col-span-2 tool-btn border-red-900/40 hover:border-red-500 hover:text-red-400">RESET ALL</button>
                     </div>
-                    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex-1">
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
                         <h4 class="text-[10px] font-bold text-zinc-500 mb-3 uppercase">Command VidAI</h4>
-                        <textarea id="ai-prompt" rows="6" class="w-full bg-transparent border-none outline-none resize-none text-[13px] text-zinc-200 placeholder:text-zinc-700" placeholder="e.g. 'Add a camera shake effect and upscale to 4080p quality'"></textarea>
-                        <button onclick="runCustomAI()" class="mt-4 w-full bg-white text-black py-3 rounded-xl font-bold text-[12px] hover:bg-violet-400 transition-colors">GENERATE WITH VIDAI</button>
+                        <textarea id="ai-prompt" rows="5" class="w-full bg-transparent border-none outline-none resize-none text-[13px] text-zinc-200 placeholder:text-zinc-700" placeholder="e.g. 'Make it cinematic and warm' or 'Flip horizontal and slow motion' or 'Add text "My Film"'"></textarea>
+                        <button onclick="runCustomAI()" class="mt-3 w-full bg-white text-black py-3 rounded-xl font-bold text-[12px] hover:bg-violet-400 transition-colors">GENERATE WITH VIDAI</button>
+                    </div>
+                    <div class="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-3">
+                        <p class="text-[10px] text-zinc-600 leading-relaxed">Try: <span class="text-zinc-400">"cinematic"</span>, <span class="text-zinc-400">"warm"</span>, <span class="text-zinc-400">"neon"</span>, <span class="text-zinc-400">"horror"</span>, <span class="text-zinc-400">"dreamy"</span>, <span class="text-zinc-400">"b&w"</span>, <span class="text-zinc-400">"rotate 90"</span>, <span class="text-zinc-400">"slow"</span>, <span class="text-zinc-400">"2x fast"</span>, <span class="text-zinc-400">"add text 'Title'"</span>, <span class="text-zinc-400">"reset"</span></p>
                     </div>
                 </div>
-                <div id="manual-panel" class="hidden">
-                    <p class="text-zinc-500 text-xs">Project settings and manual adjustments</p>
+
+                <div id="manual-panel" class="hidden space-y-5">
+                    <h4 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Manual Adjustments</h4>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[10px] text-zinc-400"><span>Brightness</span><span id="brightness-slider-val">1</span></div>
+                        <input type="range" id="brightness-slider" min="0.2" max="2" step="0.05" value="1" class="w-full accent-violet-500" oninput="onSliderChange('brightness', this.value)">
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[10px] text-zinc-400"><span>Contrast</span><span id="contrast-slider-val">1</span></div>
+                        <input type="range" id="contrast-slider" min="0.2" max="3" step="0.05" value="1" class="w-full accent-violet-500" oninput="onSliderChange('contrast', this.value)">
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[10px] text-zinc-400"><span>Saturation</span><span id="saturate-slider-val">1</span></div>
+                        <input type="range" id="saturate-slider" min="0" max="3" step="0.05" value="1" class="w-full accent-violet-500" oninput="onSliderChange('saturate', this.value)">
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[10px] text-zinc-400"><span>Sepia</span><span id="sepia-slider-val">0</span></div>
+                        <input type="range" id="sepia-slider" min="0" max="1" step="0.05" value="0" class="w-full accent-violet-500" oninput="onSliderChange('sepia', this.value)">
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[10px] text-zinc-400"><span>Blur</span><span id="blur-slider-val">0</span></div>
+                        <input type="range" id="blur-slider" min="0" max="10" step="0.5" value="0" class="w-full accent-violet-500" oninput="onSliderChange('blur', this.value)">
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[10px] text-zinc-400"><span>Speed</span><span id="speed-slider-val">1</span></div>
+                        <input type="range" id="speed-slider" min="0.25" max="4" step="0.25" value="1" class="w-full accent-violet-500" oninput="onSliderChange('speed', this.value)">
+                    </div>
+
+                    <div class="pt-2 border-t border-zinc-800/50 space-y-2">
+                        <h4 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Transform</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="runAITool('flip')" class="tool-btn text-[9px]">FLIP HORIZ</button>
+                            <button onclick="appliedFilters.flip='v'; applyFiltersToVideo()" class="tool-btn text-[9px]">FLIP VERT</button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="appliedFilters.rotate=90; applyFiltersToVideo()" class="tool-btn text-[9px]">ROT 90°</button>
+                            <button onclick="appliedFilters.rotate=180; applyFiltersToVideo()" class="tool-btn text-[9px]">ROT 180°</button>
+                            <button onclick="appliedFilters.rotate=0; applyFiltersToVideo()" class="tool-btn text-[9px]">ROT 0°</button>
+                        </div>
+                    </div>
+
+                    <button onclick="runAITool('reset')" class="w-full tool-btn border-red-900/40 hover:border-red-500 hover:text-red-400 h-10 text-[10px]">RESET ALL EFFECTS</button>
                 </div>
             </div>
         </aside>
