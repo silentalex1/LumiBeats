@@ -1,181 +1,327 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VidAI Studio • Professional AI Video Editor</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VidAI Studio • Professional AI Video Editor</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-[#050505] text-zinc-100 antialiased selection:bg-violet-500/30">
-    <nav class="bg-[#050505]/80 backdrop-blur-xl border-b border-zinc-800/50 px-6 py-3 flex items-center justify-between sticky top-0 z-50">
-        <div class="flex items-center gap-x-6">
-            <div class="flex items-center gap-x-2.5 group cursor-pointer">
-                <div class="w-8 h-8 bg-gradient-to-tr from-violet-600 to-fuchsia-500 rounded-lg flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:scale-105 transition-transform">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                </div>
-                <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-400">VidAI</h1>
-            </div>
-            <div class="hidden md:flex items-center gap-x-6 text-[13px] font-medium text-zinc-400">
-                <a href="#" onclick="showSection('editor')" class="hover:text-white transition-colors">Editor</a>
-                <a href="#" class="hover:text-white transition-colors">Projects</a>
-                <a href="#" class="hover:text-white transition-colors">Assets</a>
-                <a href="#" class="hover:text-white transition-colors">Stock</a>
-            </div>
-        </div>
-        <div class="flex items-center gap-x-3">
-            <div class="px-4 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full text-[11px] font-mono text-emerald-400 flex items-center gap-x-2">
-                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                VidAI Engine v6.0
-            </div>
-            <div class="w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center cursor-pointer border border-zinc-700">
-                <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-            </div>
-        </div>
-    </nav>
+<body>
 
-    <div id="upload-screen" class="min-h-[calc(100vh-64px)] flex items-center justify-center p-6">
-        <div onclick="triggerUpload()" class="group relative w-full max-w-2xl aspect-[16/10] bg-zinc-900/30 border border-zinc-800 rounded-3xl flex flex-col items-center justify-center hover:bg-zinc-900/50 hover:border-violet-500/50 transition-all cursor-pointer">
-            <div class="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center mb-6">
-                <svg class="w-8 h-8 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-            </div>
-            <h2 class="text-3xl font-semibold tracking-tight mb-2">Import Project Media</h2>
-            <p class="text-zinc-500 mb-8">Drop files here to begin AI generation</p>
-            <input type="file" id="fileInput" accept="video/*" class="hidden" onchange="handleFile(this)">
-            <button onclick="event.stopPropagation(); loadDemoVideo()" class="px-5 py-2 bg-zinc-800 border border-zinc-700 rounded-full text-[12px] text-zinc-300 hover:border-violet-500 hover:text-violet-400 transition-all">Load Demo Video</button>
-        </div>
+<nav style="background:rgba(5,5,5,0.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;">
+  <div style="display:flex;align-items:center;gap:28px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,#7c3aed,#a21caf);border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(124,58,237,0.25);">
+        <svg width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+      </div>
+      <span style="font-size:18px;font-weight:700;letter-spacing:-0.03em;background:linear-gradient(90deg,#fff,#a1a1aa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">VidAI</span>
+    </div>
+    <div style="display:flex;gap:20px;">
+      <a href="#" class="nav-link" onclick="showUpload()">Editor</a>
+      <a href="#" class="nav-link">Projects</a>
+      <a href="#" class="nav-link">Assets</a>
+      <a href="#" class="nav-link" onclick="showPluginPage()">Plugin</a>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div style="padding:5px 14px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:20px;font-size:11px;font-family:monospace;color:var(--emerald);display:flex;align-items:center;gap:7px;">
+      <span style="width:6px;height:6px;background:var(--emerald);border-radius:50%;display:inline-block;" class="animate-pulse"></span>
+      VidAI Engine v6.0
+    </div>
+    <div style="width:32px;height:32px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+      <svg width="15" height="15" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+    </div>
+  </div>
+</nav>
+
+<div id="upload-screen" style="min-height:calc(100vh - 56px);display:flex;align-items:center;justify-content:center;padding:24px;">
+  <div style="width:100%;max-width:580px;">
+    <div onclick="triggerUpload()" class="upload-zone" style="aspect-ratio:16/10;flex-direction:column;gap:0;">
+      <div style="width:60px;height:60px;background:var(--bg-elevated);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+        <svg width="28" height="28" fill="none" stroke="var(--violet-light)" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+      </div>
+      <h2 style="font-size:26px;font-weight:600;letter-spacing:-0.03em;margin-bottom:8px;">Import Project Media</h2>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px;">Drop a video file here, or click to browse</p>
+      <input type="file" id="fileInput" accept="video/*" style="display:none;" onchange="handleFile(this)">
+      <button onclick="event.stopPropagation();loadDemoVideo()" style="padding:8px 20px;background:var(--bg-elevated);border:1px solid var(--border-strong);border-radius:20px;font-size:12px;font-weight:500;color:var(--text-muted);transition:all 0.15s;" onmouseover="this.style.borderColor='var(--violet-light)';this.style.color='var(--violet-light)';" onmouseout="this.style.borderColor='var(--border-strong)';this.style.color='var(--text-muted)';">Load Demo Video</button>
+    </div>
+  </div>
+</div>
+
+<div id="plugin-page" style="display:none;min-height:calc(100vh - 56px);padding:40px 32px;">
+  <div style="max-width:760px;margin:0 auto;">
+    <div style="margin-bottom:32px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <svg width="18" height="18" fill="none" stroke="var(--violet-light)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 4H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2v-5M15.5 3.5a2.121 2.121 0 013 3L12 13l-4 1 1-4 6.5-6.5z"/></svg>
+        <h1 style="font-size:22px;font-weight:700;letter-spacing:-0.03em;">Plugin Store</h1>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);">Extend VidAI with powerful tools for your workflow.</p>
     </div>
 
-    <div id="editor-screen" class="hidden h-[calc(100vh-64px)] grid-cols-[260px_1fr_320px]">
-        <aside class="bg-[#080808] border-r border-zinc-800/50 flex flex-col">
-            <div class="p-4 flex items-center justify-between border-b border-zinc-800/30">
-                <h3 class="text-[11px] font-bold uppercase tracking-widest text-zinc-500">History</h3>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <div class="plugin-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(162,28,175,0.2));border:1px solid rgba(124,58,237,0.3);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="20" height="20" fill="none" stroke="var(--violet-light)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
             </div>
-            <div id="history-list" class="flex-1 overflow-y-auto p-3 space-y-2">
-                <div onclick="loadDemoVideo()" class="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-3 cursor-pointer hover:border-violet-500/40 transition-all">
-                    <div class="w-full aspect-video bg-zinc-800 rounded-lg mb-2 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    </div>
-                    <p class="text-[10px] font-medium text-zinc-400">Demo_Source.mp4</p>
-                </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+                <span style="font-size:14px;font-weight:600;">Audio Manipulator</span>
+                <span class="badge badge-violet">v1.2</span>
+              </div>
+              <span style="font-size:11px;color:var(--text-muted);">Voice & Audio Control</span>
             </div>
-        </aside>
-
-        <main class="flex flex-col bg-[#050505]">
-            <header class="h-14 px-6 border-b border-zinc-800/50 flex items-center justify-between bg-[#080808]">
-                <div class="flex items-center gap-x-4">
-                    <h2 id="video-title" class="text-sm font-medium">Untitled</h2>
-                    <span id="video-duration" class="text-[11px] font-mono text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded">00:00 / 00:00</span>
-                    <div id="quality-badge" class="text-[9px] font-bold bg-violet-500/10 text-violet-400 px-2 py-0.5 rounded border border-violet-500/20">1080P</div>
-                </div>
-                <button onclick="exportVideo()" class="bg-violet-600 hover:bg-violet-500 text-white px-5 py-1.5 rounded-full text-[13px] font-semibold transition-all flex items-center gap-x-2">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    Export & Download
-                </button>
-            </header>
-
-            <div class="flex-1 flex items-center justify-center p-8 relative">
-                <div class="relative w-full max-w-[90%] aspect-video bg-black rounded-2xl shadow-2xl overflow-hidden border border-zinc-800/50">
-                    <video id="preview" class="w-full h-full object-contain" controls></video>
-                    <div id="ai-overlay" class="hidden absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-                        <div class="text-emerald-400 font-bold tracking-tighter text-2xl animate-pulse">CHANGES APPLIED</div>
-                    </div>
-                </div>
-            </div>
-
-            <footer class="bg-[#080808] border-t border-zinc-800/50 p-4 space-y-3">
-                <div id="trim-container" class="px-1"></div>
-                <div id="timeline" class="h-10 bg-zinc-900/50 border border-zinc-800 rounded-xl relative cursor-crosshair" onclick="scrubTimeline(event)">
-                    <div id="playhead" class="absolute top-0 bottom-0 w-0.5 bg-violet-500 z-10 pointer-events-none"></div>
-                </div>
-            </footer>
-        </main>
-
-        <aside class="bg-[#080808] border-l border-zinc-800/50 flex flex-col overflow-y-auto">
-            <div class="flex border-b border-zinc-800/50 sticky top-0 bg-[#080808] z-10">
-                <button onclick="switchTab(0)" id="tab-0" class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest border-b border-violet-500">AI Studio</button>
-                <button onclick="switchTab(1)" id="tab-1" class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Settings</button>
-            </div>
-
-            <div class="p-5 flex-1 flex flex-col">
-                <div id="ai-panel" class="space-y-5">
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="runAITool('shake')" class="tool-btn">SHAKE</button>
-                        <button onclick="runAITool('cinematic')" class="tool-btn">CINEMATIC</button>
-                        <button onclick="runAITool('grayscale')" class="tool-btn">B&W</button>
-                        <button onclick="runAITool('warm')" class="tool-btn">WARM</button>
-                        <button onclick="runAITool('flip')" class="tool-btn">FLIP H</button>
-                        <button onclick="runAITool('slow')" class="tool-btn">SLOW MO</button>
-                        <button onclick="runAITool('reset')" class="col-span-2 tool-btn border-red-900/40 hover:border-red-500 hover:text-red-400">RESET ALL</button>
-                    </div>
-                    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
-                        <h4 class="text-[10px] font-bold text-zinc-500 mb-3 uppercase">Command VidAI</h4>
-                        <textarea id="ai-prompt" rows="5" class="w-full bg-transparent border-none outline-none resize-none text-[13px] text-zinc-200 placeholder:text-zinc-700" placeholder="e.g. 'Make it cinematic and warm' or 'Flip horizontal and slow motion' or 'Add text "My Film"'"></textarea>
-                        <button onclick="runCustomAI()" class="mt-3 w-full bg-white text-black py-3 rounded-xl font-bold text-[12px] hover:bg-violet-400 transition-colors">GENERATE WITH VIDAI</button>
-                    </div>
-                    <div class="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-3">
-                        <p class="text-[10px] text-zinc-600 leading-relaxed">Try: <span class="text-zinc-400">"cinematic"</span>, <span class="text-zinc-400">"warm"</span>, <span class="text-zinc-400">"neon"</span>, <span class="text-zinc-400">"horror"</span>, <span class="text-zinc-400">"dreamy"</span>, <span class="text-zinc-400">"b&w"</span>, <span class="text-zinc-400">"rotate 90"</span>, <span class="text-zinc-400">"slow"</span>, <span class="text-zinc-400">"2x fast"</span>, <span class="text-zinc-400">"add text 'Title'"</span>, <span class="text-zinc-400">"reset"</span></p>
-                    </div>
-                </div>
-
-                <div id="manual-panel" class="hidden space-y-5">
-                    <h4 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Manual Adjustments</h4>
-
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-[10px] text-zinc-400"><span>Brightness</span><span id="brightness-slider-val">1</span></div>
-                        <input type="range" id="brightness-slider" min="0.2" max="2" step="0.05" value="1" class="w-full accent-violet-500" oninput="onSliderChange('brightness', this.value)">
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-[10px] text-zinc-400"><span>Contrast</span><span id="contrast-slider-val">1</span></div>
-                        <input type="range" id="contrast-slider" min="0.2" max="3" step="0.05" value="1" class="w-full accent-violet-500" oninput="onSliderChange('contrast', this.value)">
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-[10px] text-zinc-400"><span>Saturation</span><span id="saturate-slider-val">1</span></div>
-                        <input type="range" id="saturate-slider" min="0" max="3" step="0.05" value="1" class="w-full accent-violet-500" oninput="onSliderChange('saturate', this.value)">
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-[10px] text-zinc-400"><span>Sepia</span><span id="sepia-slider-val">0</span></div>
-                        <input type="range" id="sepia-slider" min="0" max="1" step="0.05" value="0" class="w-full accent-violet-500" oninput="onSliderChange('sepia', this.value)">
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-[10px] text-zinc-400"><span>Blur</span><span id="blur-slider-val">0</span></div>
-                        <input type="range" id="blur-slider" min="0" max="10" step="0.5" value="0" class="w-full accent-violet-500" oninput="onSliderChange('blur', this.value)">
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-[10px] text-zinc-400"><span>Speed</span><span id="speed-slider-val">1</span></div>
-                        <input type="range" id="speed-slider" min="0.25" max="4" step="0.25" value="1" class="w-full accent-violet-500" oninput="onSliderChange('speed', this.value)">
-                    </div>
-
-                    <div class="pt-2 border-t border-zinc-800/50 space-y-2">
-                        <h4 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Transform</h4>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="runAITool('flip')" class="tool-btn text-[9px]">FLIP HORIZ</button>
-                            <button onclick="appliedFilters.flip='v'; applyFiltersToVideo()" class="tool-btn text-[9px]">FLIP VERT</button>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2">
-                            <button onclick="appliedFilters.rotate=90; applyFiltersToVideo()" class="tool-btn text-[9px]">ROT 90°</button>
-                            <button onclick="appliedFilters.rotate=180; applyFiltersToVideo()" class="tool-btn text-[9px]">ROT 180°</button>
-                            <button onclick="appliedFilters.rotate=0; applyFiltersToVideo()" class="tool-btn text-[9px]">ROT 0°</button>
-                        </div>
-                    </div>
-
-                    <button onclick="runAITool('reset')" class="w-full tool-btn border-red-900/40 hover:border-red-500 hover:text-red-400 h-10 text-[10px]">RESET ALL EFFECTS</button>
-                </div>
-            </div>
-        </aside>
-    </div>
-
-    <div id="loading-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[9999]">
-        <div class="text-center">
-            <div class="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-            <h3 id="loading-text" class="text-2xl font-bold text-white tracking-tight">VidAI is cooking up..</h3>
-            <p class="text-zinc-500 mt-2 text-sm font-mono">Synthesizing Neural Layers</p>
+          </div>
+          <button id="install-audio" class="install-btn" onclick="toggleInstall('audio')">Install</button>
         </div>
+        <p style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-bottom:12px;">Swap, isolate, or replace audio tracks using specific voice profiles. Target individual speakers without affecting the rest of the audio — perfect for dubbing, voiceover replacement, and per-speaker tone adjustments.</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span class="badge badge-violet">Voice Isolation</span>
+          <span class="badge badge-violet">Speaker Targeting</span>
+          <span class="badge badge-violet">Tone Control</span>
+        </div>
+      </div>
+
+      <div class="plugin-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(239,68,68,0.15));border:1px solid rgba(245,158,11,0.3);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+                <span style="font-size:14px;font-weight:600;">Viral Hook</span>
+                <span class="badge badge-amber">v2.0</span>
+              </div>
+              <span style="font-size:11px;color:var(--text-muted);">Scroll-Stop Detector</span>
+            </div>
+          </div>
+          <button id="install-viral" class="install-btn" onclick="toggleInstall('viral')">Install</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-bottom:12px;">Scans facial expressions, audio peaks, and visual density to predict which moment in your clip will stop the scroll on TikTok, YouTube Shorts, or Instagram Reels. The Magic Hook button instantly repositions that best-performing moment to the start of your timeline — no manual scrubbing needed.</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span class="badge badge-amber">Facial Analysis</span>
+          <span class="badge badge-amber">Audio Peak Detection</span>
+          <span class="badge badge-amber">Magic Hook Button</span>
+          <span class="badge badge-amber">TikTok & Shorts</span>
+        </div>
+      </div>
+
     </div>
 
-    <script src="script.js"></script>
+    <div style="margin-top:24px;">
+      <button onclick="showUpload()" style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;background:var(--bg-elevated);border:1px solid var(--border-strong);border-radius:20px;font-size:12px;font-weight:500;color:var(--text-muted);transition:all 0.15s;" onmouseover="this.style.borderColor='var(--violet-light)';this.style.color='var(--text-primary)';" onmouseout="this.style.borderColor='var(--border-strong)';this.style.color='var(--text-muted)';">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        Back to Editor
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="editor-screen">
+  <aside style="background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);">History</span>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;" class="scrollbar-thin">
+      <div onclick="loadDemoVideo()" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='rgba(124,58,237,0.4)';" onmouseout="this.style.borderColor='var(--border)';">
+        <div style="width:100%;aspect-ratio:16/9;background:var(--bg-base);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;">
+          <svg width="22" height="22" fill="none" stroke="var(--text-dim)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <p style="font-size:10px;font-weight:500;color:var(--text-muted);">Demo_Source.mp4</p>
+      </div>
+    </div>
+  </aside>
+
+  <main style="display:flex;flex-direction:column;background:var(--bg-base);overflow:hidden;">
+    <header style="height:52px;padding:0 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg-panel);flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <h2 id="video-title" style="font-size:13px;font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Untitled</h2>
+        <span id="video-duration" style="font-size:11px;font-family:monospace;color:var(--text-muted);background:var(--bg-elevated);padding:2px 8px;border-radius:6px;">0:00 / 0:00</span>
+        <span id="quality-badge" class="quality-badge">—</span>
+      </div>
+      <button onclick="exportVideo()" class="export-btn">
+        <svg width="13" height="13" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Export & Download
+      </button>
+    </header>
+
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px;overflow:hidden;">
+      <div style="position:relative;width:100%;max-width:88%;aspect-ratio:16/9;background:#000;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+        <video id="preview" style="width:100%;height:100%;object-fit:contain;" controls></video>
+        <div id="ai-overlay" class="ai-overlay hidden">
+          <span style="font-size:18px;font-weight:800;letter-spacing:-0.02em;color:var(--emerald);">Changes Applied</span>
+        </div>
+      </div>
+    </div>
+
+    <footer style="background:var(--bg-panel);border-top:1px solid var(--border);padding:14px 20px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;">
+      <div id="trim-container"></div>
+      <div class="timeline-bar" id="timeline" onclick="scrubTimeline(event)">
+        <div class="playhead" id="playhead"></div>
+      </div>
+    </footer>
+  </main>
+
+  <aside style="background:var(--bg-panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
+    <div style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <button class="tab-btn active" id="tab-0" onclick="switchTab(0)">AI Studio</button>
+      <button class="tab-btn" id="tab-1" onclick="switchTab(1)">Settings</button>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:18px;" class="scrollbar-thin">
+      <div id="ai-panel">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;">
+          <button class="tool-btn" onclick="runAITool('shake')">Shake</button>
+          <button class="tool-btn" onclick="runAITool('cinematic')">Cinematic</button>
+          <button class="tool-btn" onclick="runAITool('grayscale')">B&W</button>
+          <button class="tool-btn" onclick="runAITool('warm')">Warm</button>
+          <button class="tool-btn" onclick="runAITool('flip')">Flip H</button>
+          <button class="tool-btn" onclick="runAITool('slow')">Slow Mo</button>
+          <button class="tool-btn danger" onclick="runAITool('reset')" style="grid-column:1/-1;">Reset All</button>
+        </div>
+
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;">Command VidAI</div>
+          <textarea id="ai-prompt" rows="5" placeholder="e.g. 'Make it cinematic', 'warm tones', 'add text &quot;My Film&quot;', 'slow motion', 'rotate 90'"></textarea>
+          <button onclick="runCustomAI()" style="margin-top:12px;width:100%;background:#fff;color:#000;padding:11px;border-radius:var(--radius-md);font-size:12px;font-weight:700;letter-spacing:0.04em;transition:background 0.15s;" onmouseover="this.style.background='var(--violet-light)';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#000';">GENERATE WITH VIDAI</button>
+        </div>
+
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Quick Commands</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">
+            <span class="hint-pill"><span>cinematic</span></span>
+            <span class="hint-pill"><span>warm</span></span>
+            <span class="hint-pill"><span>neon</span></span>
+            <span class="hint-pill"><span>horror</span></span>
+            <span class="hint-pill"><span>b&w</span></span>
+            <span class="hint-pill"><span>rotate 90</span></span>
+            <span class="hint-pill"><span>slow</span></span>
+            <span class="hint-pill"><span>2x fast</span></span>
+            <span class="hint-pill"><span>add text "Title"</span></span>
+            <span class="hint-pill"><span>720p</span></span>
+            <span class="hint-pill"><span>1080p</span></span>
+            <span class="hint-pill"><span>reset</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="manual-panel" style="display:none;flex-direction:column;gap:18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);">Manual Adjustments</div>
+
+        <div id="slider-brightness" style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);"><span>Brightness</span><span id="brightness-val">1</span></div>
+          <input type="range" class="slider-track" id="brightness-slider" min="0.2" max="2" step="0.05" value="1" oninput="onSliderChange('brightness',this.value)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);"><span>Contrast</span><span id="contrast-val">1</span></div>
+          <input type="range" class="slider-track" id="contrast-slider" min="0.2" max="3" step="0.05" value="1" oninput="onSliderChange('contrast',this.value)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);"><span>Saturation</span><span id="saturate-val">1</span></div>
+          <input type="range" class="slider-track" id="saturate-slider" min="0" max="3" step="0.05" value="1" oninput="onSliderChange('saturate',this.value)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);"><span>Sepia</span><span id="sepia-val">0</span></div>
+          <input type="range" class="slider-track" id="sepia-slider" min="0" max="1" step="0.05" value="0" oninput="onSliderChange('sepia',this.value)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);"><span>Blur</span><span id="blur-val">0</span></div>
+          <input type="range" class="slider-track" id="blur-slider" min="0" max="10" step="0.5" value="0" oninput="onSliderChange('blur',this.value)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);"><span>Playback Speed</span><span id="speed-val">1</span></div>
+          <input type="range" class="slider-track" id="speed-slider" min="0.25" max="4" step="0.25" value="1" oninput="onSliderChange('speed',this.value)">
+        </div>
+
+        <div class="divider"></div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);">Transform</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button class="tool-btn" style="font-size:9px;" onclick="runAITool('flip')">Flip H</button>
+          <button class="tool-btn" style="font-size:9px;" onclick="appliedFilters.flip='v';applyFiltersToVideo()">Flip V</button>
+          <button class="tool-btn" style="font-size:9px;" onclick="appliedFilters.rotate=90;applyFiltersToVideo()">Rotate 90°</button>
+          <button class="tool-btn" style="font-size:9px;" onclick="appliedFilters.rotate=180;applyFiltersToVideo()">Rotate 180°</button>
+        </div>
+        <button class="tool-btn danger" onclick="runAITool('reset')">Reset All Effects</button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div id="loading-modal" class="modal-overlay hidden">
+  <div style="text-align:center;">
+    <div style="width:56px;height:56px;border:3px solid rgba(124,58,237,0.2);border-top-color:var(--violet-light);border-radius:50%;margin:0 auto 20px;" class="animate-spin"></div>
+    <h3 id="loading-text" style="font-size:20px;font-weight:700;letter-spacing:-0.02em;margin-bottom:6px;">VidAI is cooking up..</h3>
+    <p style="font-size:12px;color:var(--text-muted);font-family:monospace;">Synthesizing Neural Layers</p>
+  </div>
+</div>
+
+<div id="premium-modal" class="modal-overlay hidden">
+  <div class="premium-modal-card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <div style="width:36px;height:36px;background:linear-gradient(135deg,rgba(124,58,237,0.3),rgba(162,28,175,0.3));border:1px solid rgba(124,58,237,0.4);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+        <svg width="16" height="16" fill="none" stroke="var(--violet-light)" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3l14 9-14 9V3z"/></svg>
+      </div>
+      <div>
+        <h3 style="font-size:17px;font-weight:700;letter-spacing:-0.02em;">You'll need Premium for that.</h3>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">Unlock the full VidAI experience.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);margin-bottom:12px;">With Premium you'll be able to:</p>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:24px;">
+      <li style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#d4d4d8;line-height:1.5;">
+        <span style="color:var(--violet-light);font-weight:700;flex-shrink:0;">+</span>
+        Change video quality to any resolution you want and desire.
+      </li>
+      <li style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#d4d4d8;line-height:1.5;">
+        <span style="color:var(--violet-light);font-weight:700;flex-shrink:0;">+</span>
+        Remove all watermarks to keep your branding professional and clean.
+      </li>
+      <li style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#d4d4d8;line-height:1.5;">
+        <span style="color:var(--violet-light);font-weight:700;flex-shrink:0;">+</span>
+        Access our massive library of trending music and 4K stock footage.
+      </li>
+      <li style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#d4d4d8;line-height:1.5;">
+        <span style="color:var(--violet-light);font-weight:700;flex-shrink:0;">+</span>
+        Use AI background removal to swap any background without a green screen.
+      </li>
+      <li style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#d4d4d8;line-height:1.5;">
+        <span style="color:var(--violet-light);font-weight:700;flex-shrink:0;">+</span>
+        Auto-generate subtitles in seconds with one click of a button.
+      </li>
+      <li style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#d4d4d8;line-height:1.5;">
+        <span style="color:var(--violet-light);font-weight:700;flex-shrink:0;">+</span>
+        Export 3x faster by skipping the line with priority cloud rendering.
+      </li>
+      <li style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#d4d4d8;line-height:1.5;">
+        <span style="color:var(--violet-light);font-weight:700;flex-shrink:0;">+</span>
+        Save unlimited projects with extra cloud storage for all your raw files.
+      </li>
+      <li style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#d4d4d8;line-height:1.5;">
+        <span style="color:var(--violet-light);font-weight:700;flex-shrink:0;">+</span>
+        Resize for all socials instantly — converting one video for TikTok, YouTube, and Instagram.
+      </li>
+      <li style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#d4d4d8;line-height:1.5;">
+        <span style="color:var(--violet-light);font-weight:700;flex-shrink:0;">+</span>
+        Unlock cinematic filters and professional color tools for a movie-like look.
+      </li>
+    </ul>
+
+    <div style="display:flex;gap:10px;">
+      <button onclick="closePremiumModal()" style="flex:1;padding:11px;background:var(--bg-elevated);border:1px solid var(--border-strong);border-radius:var(--radius-md);font-size:12px;font-weight:600;color:var(--text-muted);transition:all 0.15s;" onmouseover="this.style.borderColor='var(--border-strong)';this.style.color='var(--text-primary)';" onmouseout="this.style.color='var(--text-muted)';">Maybe Later</button>
+      <button style="flex:2;padding:11px;background:linear-gradient(135deg,var(--violet),var(--fuchsia));color:white;border-radius:var(--radius-md);font-size:12px;font-weight:700;letter-spacing:0.03em;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.88';" onmouseout="this.style.opacity='1';">Upgrade to Premium</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
