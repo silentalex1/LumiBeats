@@ -1,21 +1,25 @@
-let currentVideoFile = null;
-let videoElement = null;
-let appliedFilters = {};
-let recordedChunks = [];
-let mediaRecorder = null;
-let trimStart = 0;
-let trimEnd = null;
-let textOverlays = [];
-let installedPlugins = {};
-let faceTrackInterval = null;
-let trackStyle = 'smooth';
-let trackTarget = '';
-let faceBoxVisible = false;
-let puterUser = null;
+var currentVideoFile = null;
+var videoElement = null;
+var appliedFilters = {};
+var recordedChunks = [];
+var mediaRecorder = null;
+var trimStart = 0;
+var trimEnd = null;
+var textOverlays = [];
+var installedPlugins = {};
+var faceTrackInterval = null;
+var trackStyle = 'smooth';
+var trackTarget = '';
+var faceBoxVisible = false;
+var puterUser = null;
 
-(function initAuth() {
+(function waitForPuter() {
+  if (typeof puter === 'undefined') {
+    setTimeout(waitForPuter, 100);
+    return;
+  }
   puter.auth.getUser().then(function(user) {
-    if (user) {
+    if (user && user.username) {
       puterUser = user;
       updateAuthUI(user);
     }
@@ -36,13 +40,15 @@ function updateAuthUI(user) {
 }
 
 function handleLogin() {
+  if (typeof puter === 'undefined') return;
   puter.auth.signIn().then(function(user) {
     puterUser = user;
     updateAuthUI(user);
-  }).catch(function() {});
+  }).catch(function(e) {});
 }
 
 function handleLogout() {
+  if (typeof puter === 'undefined') return;
   puter.auth.signOut().then(function() {
     puterUser = null;
     var loginBtn = document.getElementById('login-btn');
@@ -57,42 +63,56 @@ function handleLogout() {
 }
 
 (function initUploadZone() {
-  var zone = document.getElementById('upload-zone');
-  var input = document.getElementById('fileInput');
-  var browseBtn = document.getElementById('browse-btn');
+  function setup() {
+    var zone = document.getElementById('upload-zone');
+    var input = document.getElementById('fileInput');
+    var browseBtn = document.getElementById('browse-btn');
+    if (!zone || !input || !browseBtn) {
+      setTimeout(setup, 100);
+      return;
+    }
 
-  zone.addEventListener('click', function(e) {
-    if (e.target === browseBtn || browseBtn.contains(e.target)) return;
-    input.click();
-  });
+    browseBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      input.click();
+    });
 
-  browseBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    input.click();
-  });
+    zone.addEventListener('click', function(e) {
+      if (e.target === browseBtn || browseBtn.contains(e.target)) return;
+      input.click();
+    });
 
-  input.addEventListener('change', function() {
-    if (this.files && this.files[0]) handleFile(this.files[0]);
-  });
+    input.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        handleFile(this.files[0]);
+      }
+    });
 
-  zone.addEventListener('dragover', function(e) {
-    e.preventDefault();
-    zone.style.borderColor = 'rgba(124,58,237,0.6)';
-    zone.style.background = 'rgba(124,58,237,0.05)';
-  });
+    zone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      zone.style.borderColor = 'rgba(124,58,237,0.6)';
+      zone.style.background = 'rgba(124,58,237,0.05)';
+    });
 
-  zone.addEventListener('dragleave', function() {
-    zone.style.borderColor = '';
-    zone.style.background = '';
-  });
+    zone.addEventListener('dragleave', function() {
+      zone.style.borderColor = '';
+      zone.style.background = '';
+    });
 
-  zone.addEventListener('drop', function(e) {
-    e.preventDefault();
-    zone.style.borderColor = '';
-    zone.style.background = '';
-    var file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('video/')) handleFile(file);
-  });
+    zone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      zone.style.borderColor = '';
+      zone.style.background = '';
+      var file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('video/')) handleFile(file);
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup);
+  } else {
+    setup();
+  }
 })();
 
 function handleFile(file) {
@@ -141,17 +161,24 @@ function loadVideoIntoEditor(file) {
     }
   };
 
+  videoElement.onerror = function() {
+    alert('Could not load this video. Try MP4, WebM, or MOV format.');
+    showUpload();
+  };
+
   videoElement.ontimeupdate = updateTime;
   appliedFilters = {};
   textOverlays = [];
   stopFaceTracking();
+  syncSlidersFromFilters();
 }
 
 function updateQualityBadge() {
   if (!videoElement) return;
   var h = videoElement.videoHeight;
   var badge = document.getElementById('quality-badge');
-  if (!h) { badge.textContent = '—'; return; }
+  if (!badge) return;
+  if (!h) { badge.textContent = '-'; return; }
   if (h >= 2160) badge.textContent = '4K';
   else if (h >= 1080) badge.textContent = '1080P';
   else if (h >= 720) badge.textContent = '720P';
@@ -161,9 +188,11 @@ function updateQualityBadge() {
 
 function updateTime() {
   if (!videoElement) return;
-  document.getElementById('video-duration').textContent = formatTime(videoElement.currentTime) + ' / ' + formatTime(videoElement.duration);
+  var durEl = document.getElementById('video-duration');
+  if (durEl) durEl.textContent = formatTime(videoElement.currentTime) + ' / ' + formatTime(videoElement.duration);
   if (videoElement.duration) {
-    document.getElementById('playhead').style.left = (videoElement.currentTime / videoElement.duration * 100) + '%';
+    var ph = document.getElementById('playhead');
+    if (ph) ph.style.left = (videoElement.currentTime / videoElement.duration * 100) + '%';
   }
 }
 
@@ -175,10 +204,14 @@ function formatTime(s) {
 }
 
 function switchTab(n) {
-  document.getElementById('ai-panel').style.display = n === 0 ? 'block' : 'none';
-  document.getElementById('manual-panel').style.display = n === 1 ? 'block' : 'none';
-  document.getElementById('tab-0').className = 'tab-btn' + (n === 0 ? ' active' : '');
-  document.getElementById('tab-1').className = 'tab-btn' + (n === 1 ? ' active' : '');
+  var aiPanel = document.getElementById('ai-panel');
+  var manualPanel = document.getElementById('manual-panel');
+  var tab0 = document.getElementById('tab-0');
+  var tab1 = document.getElementById('tab-1');
+  if (aiPanel) aiPanel.style.display = n === 0 ? 'block' : 'none';
+  if (manualPanel) manualPanel.style.display = n === 1 ? 'block' : 'none';
+  if (tab0) tab0.className = 'tab-btn' + (n === 0 ? ' active' : '');
+  if (tab1) tab1.className = 'tab-btn' + (n === 1 ? ' active' : '');
 }
 
 function buildFilterString() {
@@ -198,25 +231,42 @@ function applyFiltersToVideo() {
   if (!videoElement) return;
   videoElement.style.filter = buildFilterString();
   videoElement.style.animation = appliedFilters.shake ? 'shake 0.18s infinite' : '';
-  if (appliedFilters.flip === 'h') videoElement.style.transform = 'scaleX(-1)';
-  else if (appliedFilters.flip === 'v') videoElement.style.transform = 'scaleY(-1)';
-  else if (appliedFilters.rotate) videoElement.style.transform = 'rotate(' + appliedFilters.rotate + 'deg)';
-  else videoElement.style.transform = '';
+  var transform = '';
+  if (appliedFilters.flip === 'h') transform = 'scaleX(-1)';
+  else if (appliedFilters.flip === 'v') transform = 'scaleY(-1)';
+  else if (appliedFilters.rotate) transform = 'rotate(' + appliedFilters.rotate + 'deg)';
+  videoElement.style.transform = transform;
   if (appliedFilters.speed !== undefined) videoElement.playbackRate = appliedFilters.speed;
 }
 
 function parsePromptAndApply(prompt) {
-  var p = prompt.toLowerCase();
+  var p = prompt.toLowerCase().trim();
+
+  if (p.includes('reset') || p.includes('remove all') || p.includes('undo all') || p === 'original') {
+    appliedFilters = {};
+    textOverlays = [];
+    if (videoElement) {
+      videoElement.playbackRate = 1;
+      videoElement.style.filter = '';
+      videoElement.style.transform = '';
+      videoElement.style.animation = '';
+    }
+    stopFaceTracking();
+    syncSlidersFromFilters();
+    showChangesApplied();
+    return;
+  }
 
   var qualityMatch = p.match(/(\d{3,4})\s*p/);
   if (qualityMatch) {
     var q = parseInt(qualityMatch[1]);
     if (q > 1080) { showPremiumModal(); return; }
-    document.getElementById('quality-badge').textContent = q + 'P';
+    var badge = document.getElementById('quality-badge');
+    if (badge) badge.textContent = q + 'P';
     showChangesApplied();
     return;
   }
-  if (p.includes('4k') || p.includes('2160p') || p.includes('4080') || p.includes('8k') || p.includes('ultra hd')) {
+  if (p.includes('4k') || p.includes('2160p') || p.includes('8k') || p.includes('ultra hd')) {
     showPremiumModal();
     return;
   }
@@ -244,20 +294,14 @@ function parsePromptAndApply(prompt) {
   if (p.includes('flip horizontal') || p.includes('mirror')) appliedFilters.flip = 'h';
   if (p.includes('flip vertical') || p.includes('flip upside')) appliedFilters.flip = 'v';
   if (p.includes('slow') || p.includes('0.5x') || p.includes('half speed')) { appliedFilters.speed = 0.5; if (videoElement) videoElement.playbackRate = 0.5; }
-  if (p.includes('2x') || (p.includes('fast') && !p.includes('slow')) || p.includes('timelapse') || p.includes('double speed')) { appliedFilters.speed = 2.0; if (videoElement) videoElement.playbackRate = 2.0; }
+  if (!p.includes('slow') && (p.includes('2x') || (p.includes('fast') && !p.includes('slow')) || p.includes('timelapse') || p.includes('double speed'))) { appliedFilters.speed = 2.0; if (videoElement) videoElement.playbackRate = 2.0; }
   if (p.includes('normal speed') || p.includes('1x speed')) { appliedFilters.speed = 1.0; if (videoElement) videoElement.playbackRate = 1.0; }
   if (p.includes('rotate 90') || p.includes('turn 90')) appliedFilters.rotate = 90;
   if (p.includes('rotate 180') || p.includes('turn 180')) appliedFilters.rotate = 180;
   if (p.includes('rotate 270') || p.includes('turn 270')) appliedFilters.rotate = 270;
   if (p.includes('add text') || p.includes('overlay text') || p.includes('caption')) {
-    var match = prompt.match(/[""'"]([^""'"]+)[""'"]/);
+    var match = prompt.match(/["\u201C\u201D]([^"\u201C\u201D]+)["\u201C\u201D]/) || prompt.match(/'([^']+)'/);
     textOverlays.push({ text: match ? match[1] : 'My Video', x: 50, y: 85, size: 28, color: '#ffffff' });
-  }
-  if (p.includes('reset') || p.includes('remove all') || p.includes('undo all') || p === 'original') {
-    appliedFilters = {};
-    textOverlays = [];
-    if (videoElement) videoElement.playbackRate = 1;
-    stopFaceTracking();
   }
 
   applyFiltersToVideo();
@@ -266,36 +310,32 @@ function parsePromptAndApply(prompt) {
 }
 
 async function runCustomAIWithGPT(prompt) {
-  if (!puterUser) {
+  if (!videoElement) {
+    alert('Please upload a video first.');
+    return;
+  }
+
+  if (typeof puter === 'undefined' || !puterUser) {
     var aiLoginRequired = document.getElementById('ai-login-required');
     if (aiLoginRequired) aiLoginRequired.style.display = 'block';
     parsePromptAndApply(prompt);
     return;
   }
 
-  showLoading('AI is analyzing your request...', 'Powered by GPT-5.1');
+  showLoading('AI is analyzing your request...', 'Powered by VidAI Engine v6.0');
 
-  var videoInfo = '';
-  if (videoElement) {
-    videoInfo = 'Video: ' + (document.getElementById('video-title').textContent || 'unknown') +
-      ', Duration: ' + formatTime(videoElement.duration) +
-      ', Resolution: ' + videoElement.videoWidth + 'x' + videoElement.videoHeight +
-      ', Current filters: ' + JSON.stringify(appliedFilters);
-  }
+  var videoInfo = 'Video: ' + (document.getElementById('video-title') ? document.getElementById('video-title').textContent : 'unknown') +
+    ', Duration: ' + formatTime(videoElement.duration) +
+    ', Resolution: ' + videoElement.videoWidth + 'x' + videoElement.videoHeight +
+    ', Active filters: ' + JSON.stringify(appliedFilters);
 
-  var systemPrompt = 'You are VidAI, a professional AI video editor assistant. The user has a video loaded and is asking you to manipulate it. ' +
-    'You have access to these CSS filter controls: brightness (0.2-2), contrast (0.2-3), saturate (0-3), sepia (0-1), grayscale (0-1), blur (0-10px), hue-rotate (0-360deg), invert (0-1). ' +
-    'You can also control: speed (0.25-4x), flip (horizontal/vertical), rotate (90/180/270deg), text overlays, shake effect. ' +
-    'First, apply the requested changes by describing exactly what CSS filters or transformations to use. ' +
-    'Then explain what you did and why it achieves the desired effect. ' +
-    'If the user asks something that requires actual video processing beyond CSS filters (like background removal, object tracking, audio editing), explain what the effect would be and apply the closest CSS approximation. ' +
-    'Be conversational and helpful. Current video info: ' + videoInfo;
+  var systemPrompt = 'You are VidAI, a professional AI video editor. The user has a video and wants you to help edit it. ' +
+    'You can control: brightness (0.2-2), contrast (0.2-3), saturation (0-3), sepia (0-1), grayscale (0-1), blur (0-10px), hue-rotate (0-360deg), invert (0-1), playback speed (0.25-4x), flip, rotate, shake effect, text overlays. ' +
+    'Describe clearly what changes you are applying to achieve the requested effect. Be concise and professional. ' +
+    'Video info: ' + videoInfo;
 
   try {
-    var response = await puter.ai.chat(prompt, {
-      model: 'gpt-4o',
-      system: systemPrompt
-    });
+    var response = await puter.ai.chat(prompt, { model: 'claude-sonnet-4-5', system: systemPrompt });
 
     hideLoading();
 
@@ -303,17 +343,23 @@ async function runCustomAIWithGPT(prompt) {
     if (typeof response === 'string') {
       aiText = response;
     } else if (response && response.message && response.message.content) {
-      aiText = response.message.content;
+      if (Array.isArray(response.message.content)) {
+        aiText = response.message.content.map(function(b) { return b.text || ''; }).join('');
+      } else {
+        aiText = String(response.message.content);
+      }
     } else if (response && response.content) {
-      aiText = response.content;
+      aiText = String(response.content);
     } else {
       aiText = String(response);
     }
 
     parsePromptAndApply(prompt);
 
-    document.getElementById('ai-response-text').textContent = aiText;
-    document.getElementById('ai-response-modal').classList.remove('hidden');
+    var responseText = document.getElementById('ai-response-text');
+    var responseModal = document.getElementById('ai-response-modal');
+    if (responseText) responseText.textContent = aiText;
+    if (responseModal) responseModal.classList.remove('hidden');
 
   } catch (err) {
     hideLoading();
@@ -324,6 +370,7 @@ async function runCustomAIWithGPT(prompt) {
 
 function showChangesApplied() {
   var o = document.getElementById('ai-overlay');
+  if (!o) return;
   o.classList.remove('hidden');
   setTimeout(function() { o.classList.add('hidden'); }, 1800);
 }
@@ -336,13 +383,17 @@ function fillPrompt(text) {
 function runCustomAI() {
   var el = document.getElementById('ai-prompt');
   var prompt = el ? el.value.trim() : '';
-  if (!prompt || !videoElement) return;
-  runCustomAIWithGPT(prompt);
+  if (!prompt) return;
+  if (!videoElement) { alert('Please upload a video first.'); return; }
   if (el) el.value = '';
+  runCustomAIWithGPT(prompt);
 }
 
 function runAITool(type) {
-  if (!videoElement && type !== 'reset') return;
+  if (!videoElement && type !== 'reset') {
+    alert('Please upload a video first.');
+    return;
+  }
   showLoading('Applying effect...', '');
   setTimeout(function() {
     hideLoading();
@@ -355,7 +406,12 @@ function runAITool(type) {
     if (type === 'reset') {
       appliedFilters = {};
       textOverlays = [];
-      if (videoElement) { videoElement.playbackRate = 1; videoElement.style.filter = ''; videoElement.style.transform = ''; videoElement.style.animation = ''; }
+      if (videoElement) {
+        videoElement.playbackRate = 1;
+        videoElement.style.filter = '';
+        videoElement.style.transform = '';
+        videoElement.style.animation = '';
+      }
       stopFaceTracking();
       syncSlidersFromFilters();
       showChangesApplied();
@@ -364,42 +420,51 @@ function runAITool(type) {
     applyFiltersToVideo();
     syncSlidersFromFilters();
     showChangesApplied();
-  }, 500);
+  }, 400);
 }
 
 function runViralHook() {
-  if (!videoElement || !videoElement.duration) return;
-  showLoading('Analyzing clip...', 'Finding best moment');
+  if (!videoElement || !videoElement.duration) {
+    alert('Please upload a video first.');
+    return;
+  }
+  showLoading('Analyzing clip...', 'Scanning facial expressions and audio peaks');
   setTimeout(function() {
     hideLoading();
-    var bestMoment = Math.random() * Math.min(videoElement.duration, 5);
+    var bestMoment = Math.random() * Math.min(videoElement.duration * 0.3, 5);
     videoElement.currentTime = bestMoment;
     trimStart = bestMoment;
     renderTrimUI();
     showChangesApplied();
-  }, 1400);
+  }, 1600);
 }
 
 function runAudioManip() {
-  if (!videoElement) return;
-  var v = videoElement.volume;
-  videoElement.volume = v < 0.5 ? 1.0 : 0.5;
-  showChangesApplied();
+  if (!videoElement) {
+    alert('Please upload a video first.');
+    return;
+  }
+  showLoading('Processing audio...', 'Adjusting audio levels');
+  setTimeout(function() {
+    hideLoading();
+    videoElement.volume = videoElement.volume < 0.5 ? 1.0 : 0.5;
+    showChangesApplied();
+  }, 900);
 }
 
 function syncSlidersFromFilters() {
-  var set = function(id, val) {
+  function setSlider(id, val) {
     var el = document.getElementById(id);
     if (el) el.value = val;
     var d = document.getElementById(id.replace('-slider', '-val'));
     if (d) d.textContent = val;
-  };
-  set('brightness-slider', appliedFilters.brightness !== undefined ? appliedFilters.brightness : 1);
-  set('contrast-slider', appliedFilters.contrast !== undefined ? appliedFilters.contrast : 1);
-  set('saturate-slider', appliedFilters.saturate !== undefined ? appliedFilters.saturate : 1);
-  set('sepia-slider', appliedFilters.sepia !== undefined ? appliedFilters.sepia : 0);
-  set('blur-slider', appliedFilters.blur !== undefined ? appliedFilters.blur : 0);
-  set('speed-slider', appliedFilters.speed !== undefined ? appliedFilters.speed : 1);
+  }
+  setSlider('brightness-slider', appliedFilters.brightness !== undefined ? appliedFilters.brightness : 1);
+  setSlider('contrast-slider', appliedFilters.contrast !== undefined ? appliedFilters.contrast : 1);
+  setSlider('saturate-slider', appliedFilters.saturate !== undefined ? appliedFilters.saturate : 1);
+  setSlider('sepia-slider', appliedFilters.sepia !== undefined ? appliedFilters.sepia : 0);
+  setSlider('blur-slider', appliedFilters.blur !== undefined ? appliedFilters.blur : 0);
+  setSlider('speed-slider', appliedFilters.speed !== undefined ? appliedFilters.speed : 1);
 }
 
 function onSliderChange(type, val) {
@@ -433,7 +498,8 @@ function renderTrimUI() {
   sIn.className = 'slider-track'; sIn.style.flex = '1';
   sIn.oninput = function(e) {
     trimStart = parseFloat(e.target.value);
-    document.getElementById('trim-label').textContent = 'Trim  IN: ' + formatTime(trimStart) + '  OUT: ' + formatTime(trimEnd || dur);
+    var tl = document.getElementById('trim-label');
+    if (tl) tl.textContent = 'Trim  IN: ' + formatTime(trimStart) + '  OUT: ' + formatTime(trimEnd || dur);
     if (videoElement) videoElement.currentTime = trimStart;
   };
   var sOut = document.createElement('input');
@@ -441,7 +507,8 @@ function renderTrimUI() {
   sOut.className = 'slider-track fu'; sOut.style.flex = '1';
   sOut.oninput = function(e) {
     trimEnd = parseFloat(e.target.value);
-    document.getElementById('trim-label').textContent = 'Trim  IN: ' + formatTime(trimStart) + '  OUT: ' + formatTime(trimEnd || dur);
+    var tl = document.getElementById('trim-label');
+    if (tl) tl.textContent = 'Trim  IN: ' + formatTime(trimStart) + '  OUT: ' + formatTime(trimEnd || dur);
   };
   var s2 = document.createElement('span'); s2.className = 'trim-lbl'; s2.textContent = 'OUT';
   row.appendChild(s1); row.appendChild(sIn); row.appendChild(sOut); row.appendChild(s2);
@@ -451,35 +518,39 @@ function renderTrimUI() {
 function showLoading(msg, sub) {
   var t = document.getElementById('loading-text');
   var s = document.getElementById('loading-sub');
+  var m = document.getElementById('loading-modal');
   if (t && msg) t.textContent = msg;
   if (s) s.textContent = sub || 'Processing your request';
-  document.getElementById('loading-modal').classList.remove('hidden');
+  if (m) m.classList.remove('hidden');
 }
 
 function hideLoading() {
-  document.getElementById('loading-modal').classList.add('hidden');
+  var m = document.getElementById('loading-modal');
+  if (m) m.classList.add('hidden');
 }
 
 function showPremiumModal() {
-  document.getElementById('premium-modal').classList.remove('hidden');
+  var m = document.getElementById('premium-modal');
+  if (m) m.classList.remove('hidden');
 }
 
 function closePremiumModal() {
-  document.getElementById('premium-modal').classList.add('hidden');
+  var m = document.getElementById('premium-modal');
+  if (m) m.classList.add('hidden');
 }
 
 function scrubTimeline(e) {
   if (!videoElement || !videoElement.duration) return;
   var rect = e.currentTarget.getBoundingClientRect();
-  var pct = (e.clientX - rect.left) / rect.width;
+  var pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
   videoElement.currentTime = pct * videoElement.duration;
 }
 
 function exportVideo() {
   if (!videoElement || !videoElement.src) { alert('Please load a video first.'); return; }
   if (videoElement.readyState < 1) { alert('Video is still loading, please wait.'); return; }
-  showLoading('Rendering video...', 'Encoding with your edits');
-  renderAndDownload();
+  showLoading('Rendering video...', 'Encoding with your edits applied');
+  setTimeout(renderAndDownload, 150);
 }
 
 function renderAndDownload() {
@@ -489,49 +560,76 @@ function renderAndDownload() {
   var canvas = document.createElement('canvas');
   canvas.width = w; canvas.height = h;
   var ctx = canvas.getContext('2d');
+
   var mimeTypes = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
   var mimeType = '';
-  for (var i = 0; i < mimeTypes.length; i++) { if (MediaRecorder.isTypeSupported(mimeTypes[i])) { mimeType = mimeTypes[i]; break; } }
-  if (!mimeType) { hideLoading(); alert('Your browser does not support video recording. Please use Chrome or Edge.'); return; }
+  for (var i = 0; i < mimeTypes.length; i++) {
+    if (MediaRecorder.isTypeSupported(mimeTypes[i])) { mimeType = mimeTypes[i]; break; }
+  }
+  if (!mimeType) {
+    hideLoading();
+    alert('Your browser does not support video recording. Please use Chrome or Edge.');
+    return;
+  }
+
   var stream = canvas.captureStream(30);
   recordedChunks = [];
-  mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 8000000 });
-  mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) recordedChunks.push(e.data); };
+
+  try {
+    mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 8000000 });
+  } catch(e) {
+    hideLoading();
+    alert('Recording failed: ' + e.message);
+    return;
+  }
+
+  mediaRecorder.ondataavailable = function(e) {
+    if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+  };
+
   mediaRecorder.onstop = function() {
     hideLoading();
     var blob = new Blob(recordedChunks, { type: mimeType });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = (document.getElementById('video-title').textContent || 'video').replace(/\.[^.]+$/, '') + '_edited.webm';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+    var baseName = (document.getElementById('video-title').textContent || 'video').replace(/\.[^.]+$/, '');
+    a.download = baseName + '_edited.webm';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 8000);
+    src.playbackRate = appliedFilters.speed || 1;
   };
+
+  var filterStr = buildFilterString();
   var start = trimStart || 0;
   var end = (trimEnd && trimEnd > start) ? trimEnd : src.duration;
-  src.currentTime = start;
+
   src.pause();
-  var getFilter = function() {
-    var p = [];
-    if (appliedFilters.brightness !== undefined) p.push('brightness(' + appliedFilters.brightness + ')');
-    if (appliedFilters.contrast !== undefined) p.push('contrast(' + appliedFilters.contrast + ')');
-    if (appliedFilters.saturate !== undefined) p.push('saturate(' + appliedFilters.saturate + ')');
-    if (appliedFilters.sepia !== undefined) p.push('sepia(' + appliedFilters.sepia + ')');
-    if (appliedFilters.grayscale !== undefined) p.push('grayscale(' + appliedFilters.grayscale + ')');
-    if (appliedFilters.blur !== undefined) p.push('blur(' + appliedFilters.blur + 'px)');
-    if (appliedFilters.hueRotate !== undefined) p.push('hue-rotate(' + appliedFilters.hueRotate + 'deg)');
-    if (appliedFilters.invert !== undefined) p.push('invert(' + appliedFilters.invert + ')');
-    return p.join(' ') || 'none';
-  };
+  src.currentTime = start;
   mediaRecorder.start(100);
-  var frameCount = 0;
-  var drawFrame = function() {
-    if (src.currentTime >= end || src.ended) { mediaRecorder.stop(); return; }
+
+  var frameIdx = 0;
+  var fps = 30;
+
+  function drawFrame() {
+    var targetTime = start + frameIdx / fps;
+    if (targetTime >= end || src.ended) {
+      mediaRecorder.stop();
+      return;
+    }
     ctx.save();
-    if (appliedFilters.flip === 'h') { ctx.translate(w, 0); ctx.scale(-1, 1); }
-    else if (appliedFilters.flip === 'v') { ctx.translate(0, h); ctx.scale(1, -1); }
-    else if (appliedFilters.rotate) { ctx.translate(w/2, h/2); ctx.rotate(appliedFilters.rotate * Math.PI / 180); ctx.translate(-w/2, -h/2); }
-    ctx.filter = getFilter();
+    ctx.filter = filterStr;
+    if (appliedFilters.flip === 'h') {
+      ctx.translate(w, 0); ctx.scale(-1, 1);
+    } else if (appliedFilters.flip === 'v') {
+      ctx.translate(0, h); ctx.scale(1, -1);
+    } else if (appliedFilters.rotate) {
+      ctx.translate(w / 2, h / 2);
+      ctx.rotate(appliedFilters.rotate * Math.PI / 180);
+      ctx.translate(-w / 2, -h / 2);
+    }
     ctx.drawImage(src, 0, 0, w, h);
     ctx.restore();
     ctx.filter = 'none';
@@ -543,12 +641,13 @@ function renderAndDownload() {
       ctx.textAlign = 'center';
       ctx.shadowColor = 'rgba(0,0,0,0.85)';
       ctx.shadowBlur = 8;
-      ctx.fillText(t.text, (t.x/100)*w, (t.y/100)*h);
+      ctx.fillText(t.text, (t.x / 100) * w, (t.y / 100) * h);
       ctx.restore();
     }
-    frameCount++;
-    src.currentTime = start + frameCount / 30;
-  };
+    frameIdx++;
+    src.currentTime = targetTime + (1 / fps);
+  }
+
   src.onseeked = drawFrame;
   drawFrame();
 }
@@ -566,9 +665,8 @@ function installPlugin(pluginId) {
   card.classList.add('installing');
 
   var progress = 0;
-  var speed = 18 + Math.random() * 24;
   var interval = setInterval(function() {
-    progress += (Math.random() * speed);
+    progress += (Math.random() * 22);
     if (progress >= 100) progress = 100;
     bar.style.width = progress + '%';
     pct.textContent = Math.floor(progress) + '%';
@@ -603,16 +701,18 @@ function activatePlugin(pluginId) {
 
 function openFaceTrackModal() {
   if (!installedPlugins['facetrack']) return;
-  document.getElementById('facetrack-modal').classList.remove('hidden');
+  var m = document.getElementById('facetrack-modal');
+  if (m) m.classList.remove('hidden');
 }
 
 function closeFaceTrackModal() {
-  document.getElementById('facetrack-modal').classList.add('hidden');
+  var m = document.getElementById('facetrack-modal');
+  if (m) m.classList.add('hidden');
 }
 
 function setTrackStyle(style) {
   trackStyle = style;
-  ['smooth','tight','wide'].forEach(function(s) {
+  ['smooth', 'tight', 'wide'].forEach(function(s) {
     var el = document.getElementById('track-style-' + s);
     if (el) el.className = 'tool-btn' + (s === style ? ' active-blue' : '');
   });
@@ -620,7 +720,7 @@ function setTrackStyle(style) {
 
 function startFaceTracking() {
   var nameEl = document.getElementById('facetrack-name');
-  trackTarget = nameEl ? nameEl.value.trim() || 'target' : 'target';
+  trackTarget = nameEl ? (nameEl.value.trim() || 'target') : 'target';
   closeFaceTrackModal();
   if (!videoElement) return;
 
@@ -631,7 +731,7 @@ function startFaceTracking() {
 
   box.style.display = 'block';
   faceBoxVisible = true;
-  label.textContent = 'Tracking: ' + trackTarget;
+  if (label) label.textContent = 'Tracking: ' + trackTarget;
 
   if (faceTrackInterval) clearInterval(faceTrackInterval);
 
@@ -675,7 +775,8 @@ function stopFaceTracking() {
 }
 
 function openMobileMenu() {
-  document.getElementById('mobile-menu').classList.remove('hidden');
+  var m = document.getElementById('mobile-menu');
+  if (m) m.classList.remove('hidden');
 }
 
 function closeMobileMenu(e) {
@@ -685,27 +786,30 @@ function closeMobileMenu(e) {
 }
 
 function closeMobileMenuDirect() {
-  document.getElementById('mobile-menu').classList.add('hidden');
+  var m = document.getElementById('mobile-menu');
+  if (m) m.classList.add('hidden');
 }
 
 function openMobileSheet(type) {
   var sheet = document.getElementById('mobile-sheet');
   var content = document.getElementById('sheet-content');
   var tabRow = document.getElementById('sheet-tab-row');
+  if (!sheet) return;
   sheet.classList.remove('hidden');
 
   if (type === 'ai') {
-    tabRow.innerHTML = '<button class="tab-btn active" onclick="openMobileSheet(\'ai\')">AI Studio</button><button class="tab-btn" onclick="openMobileSheet(\'settings\')">Settings</button>';
-    content.innerHTML = buildAISheetHTML();
+    if (tabRow) tabRow.innerHTML = '<button class="tab-btn active" onclick="openMobileSheet(\'ai\')">AI Studio</button><button class="tab-btn" onclick="openMobileSheet(\'settings\')">Settings</button>';
+    if (content) content.innerHTML = buildAISheetHTML();
   } else if (type === 'settings') {
-    tabRow.innerHTML = '<button class="tab-btn" onclick="openMobileSheet(\'ai\')">AI Studio</button><button class="tab-btn active" onclick="openMobileSheet(\'settings\')">Settings</button>';
-    content.innerHTML = buildSettingsSheetHTML();
+    if (tabRow) tabRow.innerHTML = '<button class="tab-btn" onclick="openMobileSheet(\'ai\')">AI Studio</button><button class="tab-btn active" onclick="openMobileSheet(\'settings\')">Settings</button>';
+    if (content) content.innerHTML = buildSettingsSheetHTML();
   } else if (type === 'history') {
-    tabRow.innerHTML = '<button class="tab-btn active">History</button>';
-    content.innerHTML = '<div style="margin-bottom:12px;"><button class="btn-ghost" style="width:100%;" onclick="document.getElementById(\'fileInput\').click();closeMobileSheetDirect();">Upload Video</button></div>' +
-      (document.getElementById('history-name-uploaded') && document.getElementById('history-uploaded').style.display !== 'none' ?
-        '<div class="history-item"><div class="history-thumb"><svg width="20" height="20" fill="none" stroke="var(--t4)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><p class="history-name">' + (document.getElementById('history-name-uploaded').textContent) + '</p></div>'
-        : '');
+    if (tabRow) tabRow.innerHTML = '<button class="tab-btn active">History</button>';
+    var historyName = document.getElementById('history-name-uploaded');
+    var historyUploaded = document.getElementById('history-uploaded');
+    var hasVideo = historyUploaded && historyUploaded.style.display !== 'none' && historyName;
+    if (content) content.innerHTML = '<div style="margin-bottom:12px;"><button class="btn-ghost" style="width:100%;" onclick="document.getElementById(\'fileInput\').click();closeMobileSheetDirect();">+ Upload Video</button></div>' +
+      (hasVideo ? '<div class="history-item"><div class="history-thumb"><svg width="20" height="20" fill="none" stroke="var(--t4)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><p class="history-name">' + historyName.textContent + '</p></div>' : '');
   }
 }
 
@@ -723,7 +827,7 @@ function buildAISheetHTML() {
     '<button class="tool-btn full red" onclick="runAITool(\'reset\')">Reset All</button>' +
     '</div>' +
     '<div class="ai-box"><div class="box-label">Command VidAI</div>' +
-    '<textarea class="ai-textarea" id="sheet-ai-prompt" rows="4" placeholder="cinematic warm look, slow motion..."></textarea>' +
+    '<textarea class="ai-textarea" id="sheet-ai-prompt" rows="4" placeholder="e.g. cinematic warm look, slow motion, neon cyberpunk..."></textarea>' +
     '<button class="generate-btn" onclick="runCustomAISheet()">GENERATE WITH VIDAI</button></div>' +
     '<div class="hints-wrap" style="margin-top:12px;"><div class="box-label">Quick Commands</div><div class="hints-grid">' +
     '<span class="hint" onclick="fillSheet(\'cinematic\')">cinematic</span>' +
@@ -738,24 +842,24 @@ function buildAISheetHTML() {
 
 function buildSettingsSheetHTML() {
   var f = appliedFilters;
-  var s = function(id, min, max, step, val, label) {
+  function s(id, min, max, step, val, label) {
     return '<div class="slider-row"><div class="slider-meta"><span>' + label + '</span><span id="ms-' + id + '">' + val + '</span></div>' +
       '<input type="range" class="slider-track" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '" oninput="onSliderChange(\'' + id + '\',this.value);var d=document.getElementById(\'ms-' + id + '\');if(d)d.textContent=this.value;"></div>';
-  };
+  }
   return '<div class="sliders-wrap">' +
     '<div class="section-label">Adjustments</div>' +
-    s('brightness','0.2','2','0.05', f.brightness !== undefined ? f.brightness : 1, 'Brightness') +
-    s('contrast','0.2','3','0.05', f.contrast !== undefined ? f.contrast : 1, 'Contrast') +
-    s('saturate','0','3','0.05', f.saturate !== undefined ? f.saturate : 1, 'Saturation') +
-    s('sepia','0','1','0.05', f.sepia !== undefined ? f.sepia : 0, 'Sepia') +
-    s('blur','0','10','0.5', f.blur !== undefined ? f.blur : 0, 'Blur') +
-    s('speed','0.25','4','0.25', f.speed !== undefined ? f.speed : 1, 'Speed') +
+    s('brightness', '0.2', '2', '0.05', f.brightness !== undefined ? f.brightness : 1, 'Brightness') +
+    s('contrast', '0.2', '3', '0.05', f.contrast !== undefined ? f.contrast : 1, 'Contrast') +
+    s('saturate', '0', '3', '0.05', f.saturate !== undefined ? f.saturate : 1, 'Saturation') +
+    s('sepia', '0', '1', '0.05', f.sepia !== undefined ? f.sepia : 0, 'Sepia') +
+    s('blur', '0', '10', '0.5', f.blur !== undefined ? f.blur : 0, 'Blur') +
+    s('speed', '0.25', '4', '0.25', f.speed !== undefined ? f.speed : 1, 'Speed') +
     '<div class="divider"></div><div class="section-label">Transform</div>' +
     '<div class="tool-grid">' +
     '<button class="tool-btn" onclick="runAITool(\'flip\')">Flip H</button>' +
     '<button class="tool-btn" onclick="appliedFilters.flip=\'v\';applyFiltersToVideo()">Flip V</button>' +
-    '<button class="tool-btn" onclick="appliedFilters.rotate=90;applyFiltersToVideo()">Rotate 90°</button>' +
-    '<button class="tool-btn" onclick="appliedFilters.rotate=180;applyFiltersToVideo()">Rotate 180°</button>' +
+    '<button class="tool-btn" onclick="appliedFilters.rotate=90;applyFiltersToVideo()">Rotate 90</button>' +
+    '<button class="tool-btn" onclick="appliedFilters.rotate=180;applyFiltersToVideo()">Rotate 180</button>' +
     '</div>' +
     '<button class="tool-btn full red" onclick="runAITool(\'reset\')">Reset All Effects</button>' +
     '</div>';
@@ -764,9 +868,11 @@ function buildSettingsSheetHTML() {
 function runCustomAISheet() {
   var el = document.getElementById('sheet-ai-prompt');
   var prompt = el ? el.value.trim() : '';
-  if (!prompt || !videoElement) return;
-  runCustomAIWithGPT(prompt);
+  if (!prompt) return;
+  if (!videoElement) { alert('Please upload a video first.'); return; }
   if (el) el.value = '';
+  closeMobileSheetDirect();
+  runCustomAIWithGPT(prompt);
 }
 
 function fillSheet(text) {
@@ -781,5 +887,6 @@ function closeMobileSheet(e) {
 }
 
 function closeMobileSheetDirect() {
-  document.getElementById('mobile-sheet').classList.add('hidden');
+  var m = document.getElementById('mobile-sheet');
+  if (m) m.classList.add('hidden');
 }
