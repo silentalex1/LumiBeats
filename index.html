@@ -23,7 +23,7 @@
       <a href="#" class="nav-link" onclick="showUpload();return false;">Editor</a>
       <a href="#" class="nav-link">Projects</a>
       <a href="#" class="nav-link">Assets</a>
-      <a href="#" class="nav-link" onclick="showPluginPage();return false;">Plugin</a>
+      <a href="#" class="nav-link" onclick="showPluginPage();return false;">Plugins</a>
     </div>
   </div>
   <div class="nav-right">
@@ -48,7 +48,7 @@
     <a href="#" onclick="showUpload();closeMobileMenuDirect();return false;">Editor</a>
     <a href="#" onclick="return false;">Projects</a>
     <a href="#" onclick="return false;">Assets</a>
-    <a href="#" onclick="showPluginPage();closeMobileMenuDirect();return false;">Plugin</a>
+    <a href="#" onclick="showPluginPage();closeMobileMenuDirect();return false;">Plugins</a>
     <div style="margin-top:12px;padding:14px;background:var(--bg2);border:1px solid var(--b);border-radius:var(--r2);display:flex;align-items:center;gap:8px;">
       <span class="engine-dot animate-pulse"></span>
       <span style="font-size:11px;font-family:monospace;color:var(--em);">VidAI Engine v6.0</span>
@@ -58,16 +58,16 @@
 
 <div id="upload-screen">
   <div class="upload-wrap">
-    <div class="upload-zone" onclick="triggerUpload()">
+    <div class="upload-zone" id="upload-zone">
       <div class="upload-icon">
         <svg width="26" height="26" fill="none" stroke="var(--vl)" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
       </div>
       <h2>Import Project Media</h2>
       <p>Drop a video here, or tap to browse</p>
-      <input type="file" id="fileInput" accept="video/*" style="display:none;" onchange="handleFile(this)">
-      <button class="btn-ghost" onclick="event.stopPropagation();loadDemoVideo()">Load Demo Video</button>
+      <input type="file" id="fileInput" accept="video/*" style="display:none;">
+      <button class="btn-ghost" id="demo-btn">Load Demo Video</button>
     </div>
-    <p style="font-size:11px;color:var(--t4);text-align:center;margin-top:16px;">Supports MP4, WebM, MOV and more</p>
+    <p style="font-size:11px;color:var(--t4);text-align:center;margin-top:16px;">Supports MP4, WebM, MOV, AVI and more</p>
   </div>
 </div>
 
@@ -76,7 +76,8 @@
     <h1 class="page-title">Plugin Store</h1>
     <p class="page-sub">Extend VidAI with powerful tools built for your workflow.</p>
 
-    <div class="plugin-card">
+    <div class="plugin-card" id="card-audio">
+      <div class="plugin-card-sweep"></div>
       <div class="plugin-header">
         <div class="plugin-info">
           <div class="plugin-icon" style="background:linear-gradient(135deg,rgba(124,58,237,0.18),rgba(162,28,175,0.18));border:1px solid rgba(124,58,237,0.3);">
@@ -90,7 +91,7 @@
             <span class="plugin-sub">Voice &amp; Audio Control</span>
           </div>
         </div>
-        <button id="install-audio" class="install-btn" onclick="toggleInstall('audio')">Install</button>
+        <button id="install-audio" class="install-btn" onclick="installPlugin('audio')">Install</button>
       </div>
       <p class="plugin-desc">Swap, isolate, or replace audio tracks using specific voice profiles. Target individual speakers without affecting the rest of the audio — perfect for dubbing, voiceover replacement, and per-speaker tone adjustments.</p>
       <div class="plugin-tags">
@@ -98,9 +99,17 @@
         <span class="badge bv">Speaker Targeting</span>
         <span class="badge bv">Tone Control</span>
       </div>
+      <div class="install-progress" id="progress-audio">
+        <div class="install-spinner"></div>
+        <div class="install-pct-wrap">
+          <div class="install-pct-bar-bg"><div class="install-pct-bar" id="bar-audio"></div></div>
+          <div class="install-pct-label" id="pct-audio">0%</div>
+        </div>
+      </div>
     </div>
 
-    <div class="plugin-card">
+    <div class="plugin-card" id="card-viral">
+      <div class="plugin-card-sweep"></div>
       <div class="plugin-header">
         <div class="plugin-info">
           <div class="plugin-icon" style="background:linear-gradient(135deg,rgba(245,158,11,0.14),rgba(239,68,68,0.14));border:1px solid rgba(245,158,11,0.3);">
@@ -114,7 +123,7 @@
             <span class="plugin-sub">Scroll-Stop Detector</span>
           </div>
         </div>
-        <button id="install-viral" class="install-btn" onclick="toggleInstall('viral')">Install</button>
+        <button id="install-viral" class="install-btn" onclick="installPlugin('viral')">Install</button>
       </div>
       <p class="plugin-desc">Scans facial expressions, audio peaks, and visual density to predict which moment in your clip will stop the scroll on TikTok, YouTube Shorts, or Instagram Reels. The Magic Hook button instantly repositions that moment to the start of your timeline — no manual scrubbing needed.</p>
       <div class="plugin-tags">
@@ -122,6 +131,46 @@
         <span class="badge ba">Audio Peaks</span>
         <span class="badge ba">Magic Hook</span>
         <span class="badge ba">TikTok &amp; Shorts</span>
+      </div>
+      <div class="install-progress" id="progress-viral">
+        <div class="install-spinner"></div>
+        <div class="install-pct-wrap">
+          <div class="install-pct-bar-bg"><div class="install-pct-bar" id="bar-viral"></div></div>
+          <div class="install-pct-label" id="pct-viral">0%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="plugin-card" id="card-facetrack">
+      <div class="plugin-card-sweep"></div>
+      <div class="plugin-header">
+        <div class="plugin-info">
+          <div class="plugin-icon" style="background:linear-gradient(135deg,rgba(59,130,246,0.18),rgba(16,185,129,0.18));border:1px solid rgba(59,130,246,0.3);">
+            <svg width="20" height="20" fill="none" stroke="var(--bll)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          </div>
+          <div>
+            <div class="plugin-name-row">
+              <span class="plugin-name">SpectraTrack FaceAI</span>
+              <span class="badge bb">v1.0</span>
+            </div>
+            <span class="plugin-sub">Targeted Face Tracking</span>
+          </div>
+        </div>
+        <button id="install-facetrack" class="install-btn" onclick="installPlugin('facetrack')">Install</button>
+      </div>
+      <p class="plugin-desc">Tell the AI whose face to follow. Once installed, describe the person — by name, appearance, or position — and SpectraTrack locks onto them with a smooth, real-time tracking box that follows their movement across the entire clip. Perfect for interviews, reactions, and multi-person scenes.</p>
+      <div class="plugin-tags">
+        <span class="badge bb">Face Detection</span>
+        <span class="badge bb">Smooth Tracking</span>
+        <span class="badge bb">Multi-Person</span>
+        <span class="badge bb">Real-Time</span>
+      </div>
+      <div class="install-progress" id="progress-facetrack">
+        <div class="install-spinner"></div>
+        <div class="install-pct-wrap">
+          <div class="install-pct-bar-bg"><div class="install-pct-bar" id="bar-facetrack"></div></div>
+          <div class="install-pct-label" id="pct-facetrack">0%</div>
+        </div>
       </div>
     </div>
 
@@ -144,6 +193,12 @@
           </div>
           <p class="history-name">Demo_Source.mp4</p>
         </div>
+        <div id="history-uploaded" style="display:none;" class="history-item">
+          <div class="history-thumb" id="history-thumb-uploaded">
+            <svg width="20" height="20" fill="none" stroke="var(--t4)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <p class="history-name" id="history-name-uploaded">Uploaded.mp4</p>
+        </div>
       </div>
     </aside>
 
@@ -161,10 +216,13 @@
       </div>
 
       <div class="video-area">
-        <div class="video-wrap">
+        <div class="video-wrap" id="video-wrap">
           <video id="preview" controls playsinline></video>
           <div id="ai-overlay" class="ai-flash hidden">
             <span>Changes Applied</span>
+          </div>
+          <div class="facetrack-overlay" id="facetrack-box">
+            <div class="facetrack-label" id="facetrack-label">Tracking</div>
           </div>
         </div>
       </div>
@@ -182,7 +240,7 @@
         <button class="tab-btn active" id="tab-0" onclick="switchTab(0)">AI Studio</button>
         <button class="tab-btn" id="tab-1" onclick="switchTab(1)">Settings</button>
       </div>
-      <div class="panel-body scrollbar-thin" id="right-panel-body">
+      <div class="panel-body scrollbar-thin">
         <div id="ai-panel">
           <div class="tool-grid">
             <button class="tool-btn" onclick="runAITool('shake')">Shake</button>
@@ -191,6 +249,9 @@
             <button class="tool-btn" onclick="runAITool('warm')">Warm</button>
             <button class="tool-btn" onclick="runAITool('flip')">Flip H</button>
             <button class="tool-btn" onclick="runAITool('slow')">Slow Mo</button>
+            <button id="facetrack-tool-btn" class="tool-btn full" onclick="openFaceTrackModal()" style="display:none;">SpectraTrack Face</button>
+            <button id="viralhook-tool-btn" class="tool-btn full" onclick="runViralHook()" style="display:none;">Viral Hook</button>
+            <button id="audiomanip-tool-btn" class="tool-btn full" onclick="runAudioManip()" style="display:none;">Audio Manipulator</button>
             <button class="tool-btn full red" onclick="runAITool('reset')">Reset All</button>
           </div>
           <div class="ai-box">
@@ -290,7 +351,7 @@
 <div id="loading-modal" class="modal-bg hidden">
   <div class="loading-card">
     <div class="spinner animate-spin"></div>
-    <h3 class="loading-title" id="loading-text">VidAI is cooking up..</h3>
+    <h3 class="loading-title" id="loading-text">VidAI is working...</h3>
     <p class="loading-sub">Synthesizing Neural Layers</p>
   </div>
 </div>
@@ -322,6 +383,33 @@
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closePremiumModal()">Maybe Later</button>
       <button class="btn-primary">Upgrade to Premium</button>
+    </div>
+  </div>
+</div>
+
+<div id="facetrack-modal" class="modal-bg hidden">
+  <div class="facetrack-modal-card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div style="width:36px;height:36px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="16" height="16" fill="none" stroke="var(--bll)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+      </div>
+      <div>
+        <div style="font-size:16px;font-weight:700;">SpectraTrack FaceAI</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:2px;">Describe the person to track</div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--t4);">Person to track</label>
+    <input class="facetrack-input" id="facetrack-name" type="text" placeholder="e.g. person on the left, man in red shirt, speaker...">
+    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--t4);">Tracking style</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:8px;margin-bottom:16px;">
+      <button class="tool-btn active-blue" id="track-style-smooth" onclick="setTrackStyle('smooth')">Smooth</button>
+      <button class="tool-btn" id="track-style-tight" onclick="setTrackStyle('tight')">Tight</button>
+      <button class="tool-btn" id="track-style-wide" onclick="setTrackStyle('wide')">Wide</button>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-secondary" onclick="closeFaceTrackModal()" style="flex:1;">Cancel</button>
+      <button class="btn-blue" onclick="startFaceTracking()" style="flex:2;">Start Tracking</button>
     </div>
   </div>
 </div>
